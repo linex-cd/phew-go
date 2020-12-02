@@ -1,0 +1,5 @@
+..\tools\Redis-x64-3.2.100\redis-server.exe redis-win.conf &
+python3 daemon.py &
+python3 health.py &
+python3 jobcenter.py
+

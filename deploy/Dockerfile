@@ -3,7 +3,7 @@ ARG VER
 
 FROM phew_image:${VER}
 
-ADD ./src /phew
+ADD ./bin /phew
 WORKDIR /phew
 
 RUN chmod +x /phew/start.sh

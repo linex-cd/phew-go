@@ -2,9 +2,15 @@ FROM golang:latest
 
 RUN cd / && wget http://download.redis.io/releases/redis-6.0.4.tar.gz && tar xzf redis-6.0.4.tar.gz && cd redis-6.0.4 && make
 
+go env -w GO111MODULE=on
+go env -w GOPROXY=https://goproxy.cn,direct
+
 go get -u github.com/gin-gonic/gin
 go get -u github.com/go-redis/redis
+go get -u github.com/shirou/gopsutil
 
+go mod tidy
+ 
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 RUN dpkg-reconfigure -f noninteractive tzdata
 
