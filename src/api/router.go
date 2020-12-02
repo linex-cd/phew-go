@@ -9,7 +9,7 @@ type Response struct {
 	Data interface{} `json:"data"`
 }
 
-func Response(c *gin.Context, code int, message string, data interface{}) {
+func ResponseJson(c *gin.Context, code int, message string, data interface{}) {
     c.JSON(http.StatusOK, Response{
         Code: code,
         Message: message,

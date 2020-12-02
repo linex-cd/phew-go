@@ -2,7 +2,11 @@ package main
 
 import "net/http"
 import "github.com/gin-gonic/gin"
-import "github.com/shirou/gopsutil"
+
+import "github.com/shirou/gopsutil/cpu"
+import "github.com/shirou/gopsutil/mem"
+import "github.com/shirou/gopsutil/disk"
+
 
 import "./api"
 

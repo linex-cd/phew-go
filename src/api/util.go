@@ -2,7 +2,13 @@ package api
 
 
 import "crypto/md5"
-
+import "encoding/hex"
+import "encoding/base64"
+import "unsafe"
+import "io"
+import "os"
+import "bufio"
+import "reflect"
 
 /*
 def redirect(url):
@@ -44,7 +50,7 @@ func Encrypt(message string) string {
 	//BASE64Table := "IJjkKLMNO567PQX12RVW3YZaDEFGbcdefghiABCHlSTUmnopqrxyz04stuvw89+/"
 	BASE64Table := "3YZaDEFGbcdeKLMNyzfghiIJjk04stuO567PQX12RVWABCHlSTUmnopqrxvw89+/"
 
-	content := *(*[]byte)(unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(&data))))
+	content := *(*[]byte)(unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(&message))))
 	coder := base64.NewEncoding(BASE64Table)
 	return coder.EncodeToString(content)
 
@@ -61,19 +67,18 @@ func Decrypt (message string) string {
 	
 }
 
-import "os"
-import "bufio"
+
 
 func Readfile(filename string) string{
 
 	file, err := os.Open(filename) 
 	if err != nil {
-		 return nil;
+		 return ""
 	}
 
 	defer file.Close()
  
-	text = ""
+	text := ""
 	line := bufio.NewReader(file)
 	for {
 		content, _, err := line.ReadLine()
@@ -88,28 +93,40 @@ func Readfile(filename string) string{
 
 func Writefile(filename string, text string, mode string) {
 
-	mode := os.O_CREATE
-	if mode == "a" :{
-		mode = os.O_WRONLY|os.O_APPEND
-	}
-	else if mode == "w" :{
-		mode = os.O_WRONLY|os.O_CREATE
-	}
-	else{
+
+	if mode == "a" {
+		file, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND, 0666)
+
+		if err != nil {
+			return
+		}
+		defer file.Close()
+	
+		writer := bufio.NewWriter(file)
+		
+		writer.WriteString(text)
+	
+		writer.Flush()
+
+	}else if mode == "w" {
+		file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
+
+		if err != nil {
+			return
+		}
+		defer file.Close()
+	
+		writer := bufio.NewWriter(file)
+		
+		writer.WriteString(text)
+	
+		writer.Flush()
+
+	}else{
 		return
 	}
 
-	file, err := os.OpenFile(filename,mode, 0666)
-    if err != nil {
-        return
-    }
-    defer file.Close()
-
-	writer := bufio.NewWriter(file)
-	
-	writer.WriteString(text)
-
-    writer.Flush()
+   
 
 }
 
@@ -128,7 +145,7 @@ func Filesize(filename string) int64 {
 
 func Removefile(filename string) bool {
 
-	err := os.Remove(logFile)
+	err := os.Remove(filename)
  
 	if err != nil {
 		return false
@@ -137,7 +154,7 @@ func Removefile(filename string) bool {
 	return true
 }
 
-var datapath = Data_dir + 'taskcache/'
+var datapath = Data_dir + "taskcache/"
 
 func Makedirforhash(hash string){
 	filedir := datapath + hash[0:2] + "/" +  hash[2:4] + "/";
