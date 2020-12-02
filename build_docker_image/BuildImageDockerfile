@@ -1,0 +1,10 @@
+FROM golang:latest
+
+RUN cd / && wget http://download.redis.io/releases/redis-6.0.4.tar.gz && tar xzf redis-6.0.4.tar.gz && cd redis-6.0.4 && make
+
+go get -u github.com/gin-gonic/gin
+go get -u github.com/go-redis/redis
+
+RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+RUN dpkg-reconfigure -f noninteractive tzdata
+
