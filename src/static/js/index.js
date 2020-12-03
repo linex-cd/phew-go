@@ -1,5 +1,5 @@
 function showjob(job_access_key){
-	$.get("state/peekjob/?job_access_key="+job_access_key, function(ret){
+	$.get("/state/peekjob/?job_access_key="+job_access_key, function(ret){
 		if (ret['code'] != 200){
 			alert(ret['msg'])
 		}
@@ -20,7 +20,7 @@ function showjob(job_access_key){
 			}
 			
 			var text = 'ID：' + data['job_id'] + '\n';
-			text = text + 'State: ' + data['state'] + '\n';
+			text = text + '/state: ' + data['/state'] + '\n';
 			text = text + 'Create Time: ' + create_time + '\n';
 			text = text + 'Finish Time: ' + finish_time + '\n';
 			text = text + 'Vendor ID: ' + data['vendor_id'] + '\n';
@@ -37,7 +37,7 @@ function showjob(job_access_key){
 }
 
 function showtask(task_access_key){
-	$.get("state/peektask/?task_access_key="+task_access_key, function(ret){
+	$.get("/state/peektask/?task_access_key="+task_access_key, function(ret){
 		if (ret['code'] != 200){
 			alert(ret['msg'])
 		}
@@ -64,7 +64,7 @@ function showtask(task_access_key){
 			}
 			
 			var text = 'ID：' + data['job_id'] + '\n';
-			text = text + 'State: ' + data['state'] + '\n';
+			text = text + '/state: ' + data['/state'] + '\n';
 			text = text + 'Note: ' + data['note'] + '\n';
 			text = text + 'Create Time: ' + create_time + '\n';
 			text = text + 'Start Time: ' + start_time + '\n';
@@ -86,7 +86,7 @@ function showtask(task_access_key){
 		
 		/////////////////////////////////////////////////
 		
-		$.get("state/sysstate", function(ret){
+		$.get("/state/system", function(ret){
 			$("#db").attr('data-rel', ret['data']['db']);
 			$("#cpu").attr('data-rel', ret['data']['cpu']);
 			$("#gpu").attr('data-rel', ret['data']['gpu']);
@@ -133,7 +133,7 @@ function showtask(task_access_key){
 			}
 			isloading_jobcounter = true;
 
-			$.get("state/jobcounter", function(ret){
+			$.get("/state/jobcounter", function(ret){
 				$("#job_total").text(ret['data']['job_total']);
 				$("#task_total").text(ret['data']['task_total']);
 				$("#job_pending").text(ret['data']['job_pending']);
@@ -157,7 +157,7 @@ function showtask(task_access_key){
 			}
 			isloading_latestwork = true;
 			
-			$.get("state/latestwork", function(ret){
+			$.get("/state/latestwork", function(ret){
 				
 				//////////////
 				var latest_job_htmlstr = ''
@@ -192,7 +192,7 @@ function showtask(task_access_key){
 					
 					var str = '<div class="recent-post-flex rct-pt-mg">\
 										<div class="recent-post-img" style="width:72px;">\
-											<a href="state/peekfile/?filename='+item['data']+'" target="_blank"><img src="img/'+item['port']+'.png" alt="Click to download file" /></a>\
+											<a href="/state/peekfile/?filename='+item['data']+'" target="_blank"><img src="img/'+item['port']+'.png" alt="Click to download file" /></a>\
 										</div>\
 										<div class="recent-post-it-ctn">\
 											<a href="javascript:void(0);" onclick="showjob(\''+item['job_access_key']+'\')"><h5>'+item['description']+'</h5></a>\
@@ -220,7 +220,7 @@ function showtask(task_access_key){
 		}, 5000);
 		
 		/////////////////////////////////////////////////
-		$.get("state/errorlist", function(ret){
+		$.get("/state/errorlist", function(ret){
 				
 			//////////////
 			var error_job_htmlstr = ''
@@ -255,7 +255,7 @@ function showtask(task_access_key){
 				
 				var str = '<div class="recent-post-flex rct-pt-mg">\
 									<div class="recent-post-img" style="width:72px;">\
-										<a href="state/peekfile/?filename='+item['data']+'" target="_blank"><img src="img/'+item['port']+'.png" alt="Open the File" /></a>\
+										<a href="/state/peekfile/?filename='+item['data']+'" target="_blank"><img src="img/'+item['port']+'.png" alt="Open the File" /></a>\
 									</div>\
 									<div class="recent-post-it-ctn">\
 										<a href="javascript:void(0);" onclick="showjob(\''+item['job_access_key']+'\')"><h5>'+item['description']+'</h5></a>\
@@ -275,7 +275,7 @@ function showtask(task_access_key){
 		});  
 	
 		/////////////////////////////////////////////////
-		$.get("state/percentage", function(ret){
+		$.get("/state/percentage", function(ret){
 				
 			//////////////
 			var percentagepie = echarts.init(document.getElementById('percentage-pie'));
@@ -357,7 +357,7 @@ function showtask(task_access_key){
 		
 		/////////////////////////////////////////////////
 		
-		$.get("state/nodecounter", function(ret){
+		$.get("/state/nodecounter", function(ret){
 			$("#vendor_count").text(ret['data']['vendor_count']);
 			$("#worker_count").text(ret['data']['worker_count']);
 			
@@ -380,7 +380,7 @@ function showtask(task_access_key){
 				var item = workers[i]
 				
 				var isonline = ''
-				if (item['state']=='online'){
+				if (item['/state']=='online'){
 					isonline = 'checked'
 				}
 				
@@ -435,7 +435,7 @@ function showtask(task_access_key){
 				var item = vendors[i]
 				
 				var isonline = ''
-				if (item['state']=='online'){
+				if (item['/state']=='online'){
 					isonline = 'checked'
 				}
 				

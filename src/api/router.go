@@ -1,4 +1,4 @@
-package api
+package main
 
 import "net/http"
 import "github.com/gin-gonic/gin"
@@ -28,8 +28,19 @@ func LoadRouter(g *gin.Engine) *gin.Engine {
         c.String(http.StatusNotFound, "404 not found");
     })
 
+    
+    // 静态资源加载
+	g.StaticFS("/monitor", http.Dir("../static"))
+    //engine.StaticFile("/ping.txt", "./res/ping.txt")
+    
+    
+    g.GET("/",  func(c *gin.Context) {
+        c.Redirect(http.StatusMovedPermanently,"/monitor/")        
+    })
+    
+
 	//state 路由
-    g.GET("/test", test)
+    g.GET("/state/system", system)
 
 
 

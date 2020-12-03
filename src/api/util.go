@@ -1,4 +1,4 @@
-package api
+package main
 
 
 import "crypto/md5"
@@ -164,13 +164,5 @@ func Makedirforhash(hash string){
 func Filedirfromhash(hash string) string{
 	filedir := datapath + hash[0:2] + "/" +  hash[2:4] + "/";
 	return filedir;
-}
-
-
-
-func main(){
-
-	//nothing
-
 }
 
