@@ -41,6 +41,7 @@ func LoadRouter(g *gin.Engine) *gin.Engine {
 	//state 路由
 	g.GET("/state/system", system)
 	g.GET("/state/latestwork", latestwork)
+	g.GET("/state/jobcounter", jobcounter)
 
 	return g
 }

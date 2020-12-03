@@ -3,6 +3,7 @@ package main
 //api for monitor
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
@@ -172,6 +173,69 @@ func latestwork(c *gin.Context) {
 	data := map[string][]map[string]interface{}{
 		"job_latest":  job_latest,
 		"task_latest": task_latest,
+	}
+
+	ResponseJson(c, 200, "ok", data)
+
+}
+
+func jobcounter(c *gin.Context) {
+
+	r = getRedisInstance()
+	_, err := r.Ping().Result()
+	if err != nil {
+		panic(err)
+	}
+
+	//job_total
+	statistics_job_total_pattern := "statistics_job_total-*"
+	statistics_job_total_pending_keys, _ := r.Keys(statistics_job_total_pattern).Result()
+
+	job_total := 0
+	for _, statistics_job_total_pending_key := range statistics_job_total_pending_keys {
+		statistics_job_total_pending, _ := r.Get(statistics_job_total_pending_key).Result()
+		statistics_job_total_pending_i, _ := strconv.Atoi(statistics_job_total_pending)
+		job_total = job_total + statistics_job_total_pending_i
+	}
+
+	//task_total
+	statistics_task_total_pattern := "statistics_task_total-*"
+	statistics_task_total_pending_keys, _ := r.Keys(statistics_task_total_pattern).Result()
+
+	task_total := 0
+	for _, statistics_task_total_pending_key := range statistics_task_total_pending_keys {
+		statistics_task_total_pending, _ := r.Get(statistics_task_total_pending_key).Result()
+		statistics_task_total_pending_i, _ := strconv.Atoi(statistics_task_total_pending)
+		task_total = task_total + statistics_task_total_pending_i
+
+	}
+
+	//job_pending
+	statistics_job_pending_pattern := "statistics_job_pending-*"
+	statistics_job_pending_pending_keys, _ := r.Keys(statistics_job_pending_pattern).Result()
+
+	job_pending := 0
+	for _, statistics_job_pending_pending_key := range statistics_job_pending_pending_keys {
+		statistics_job_pending_pending, _ := r.Get(statistics_job_pending_pending_key).Result()
+		statistics_job_pending_pending_i, _ := strconv.Atoi(statistics_job_pending_pending)
+		job_pending = job_pending + statistics_job_pending_pending_i
+	}
+
+	//work_pending
+	work_pattern := "work-*"
+	work_pending_keys, _ := r.Keys(work_pattern).Result()
+
+	work_pending := 0
+	for _, work_pending_key := range work_pending_keys {
+		work_pending_0, _ := r.LLen(work_pending_key).Result()
+		work_pending = work_pending + int(work_pending_0)
+	}
+
+	data := map[string]int{
+		"job_total":    job_total,
+		"task_total":   task_total,
+		"job_pending":  job_pending,
+		"work_pending": work_pending,
 	}
 
 	ResponseJson(c, 200, "ok", data)
