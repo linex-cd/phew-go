@@ -44,9 +44,9 @@ func taskping(c *gin.Context) {
 	r.HSet(worker_node_key, "ping_time", time.Now().Unix())
 	r.HSet(worker_node_key, "ip", worker_node_ip)
 
-	r.HSet(worker_node_key, "worker_id", jsondata["worker_id"])
-	r.HSet(worker_node_key, "name", jsondata["worker_name"])
-	r.HSet(worker_node_key, "location", jsondata["worker_location"])
+	r.HSet(worker_node_key, "worker_id", jsondata["worker_id"].(string))
+	r.HSet(worker_node_key, "name", jsondata["worker_name"].(string))
+	r.HSet(worker_node_key, "location", jsondata["worker_location"].(string))
 	r.HSet(worker_node_key, "state", "online")
 
 	data := "pong"

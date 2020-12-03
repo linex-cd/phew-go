@@ -91,5 +91,14 @@ func LoadRouter(g *gin.Engine) *gin.Engine {
 	g.POST("/task/get", get)
 	g.POST("/task/finish", finish)
 
+	//job 路由
+	g.POST("/job/ping", jobping)
+	g.POST("/job/assign", assign)
+	g.POST("/job/delete", delete)
+	g.POST("/job/done", done)
+	g.POST("/job/detail", detail)
+	g.POST("/job/read", read)
+	g.POST("/job/retry", retry)
+
 	return g
 }
