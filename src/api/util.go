@@ -9,6 +9,7 @@ import "io"
 import "os"
 import "bufio"
 import "reflect"
+import "sort"
 
 /*
 def redirect(url):
@@ -166,3 +167,28 @@ func Filedirfromhash(hash string) string{
 	return filedir;
 }
 
+type MapsSort struct {
+    Key     string
+    MapList []map[string]interface{}
+}
+
+func (m *MapsSort) Len() int {
+    return len(m.MapList)
+}
+
+func (m *MapsSort) Less(i, j int) bool {
+    return m.MapList[i][m.Key].(int) > m.MapList[j][m.Key].(int)
+}
+
+func (m *MapsSort) Swap(i, j int) {
+    m.MapList[i], m.MapList[j] = m.MapList[j], m.MapList[i]
+}
+
+func Sort(key string, maps []map[string]interface{}) []map[string]interface{} {
+    mapsSort := MapsSort{}
+    mapsSort.Key = key
+    mapsSort.MapList = maps
+    sort.Sort(&mapsSort)
+
+    return mapsSort.MapList
+}
