@@ -31,7 +31,12 @@ func taskping(c *gin.Context) {
 
 	worker_id_f := jsondata["worker_id"].(float64)
 	worker_id := strconv.FormatFloat(worker_id_f, 'f', 0, 64)
-	worker_node_key := "worker-" + jsondata["worker_group"].(string) + "-" + jsondata["worker_key"].(string) + "-" + jsondata["worker_role"].(string) + "-" + worker_id
+
+	worker_group := jsondata["worker_group"].(string)
+	worker_key := jsondata["worker_key"].(string)
+	worker_role := jsondata["worker_role"].(string)
+
+	worker_node_key := "worker-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + worker_id
 
 	worker_node_ip := c.ClientIP()
 
@@ -68,8 +73,12 @@ func get(c *gin.Context) {
 
 	json.Unmarshal([]byte(rawdata), &jsondata)
 
+	worker_group := jsondata["worker_group"].(string)
+	worker_key := jsondata["worker_key"].(string)
+	worker_role := jsondata["worker_role"].(string)
+
 	//get all work list keys
-	work_key_pattern := "work-" + jsondata["worker_group"].(string) + "-" + jsondata["worker_key"].(string) + "-" + jsondata["worker_role"].(string) + "-*"
+	work_key_pattern := "work-" + worker_group + "-" + worker_key + "-" + worker_role + "-*"
 	work_keys, _ := r.Keys(work_key_pattern).Result()
 
 	if len(work_keys) == 0 {
@@ -135,10 +144,6 @@ func get(c *gin.Context) {
 		}
 
 	}
-
-	worker_group := jsondata["worker_group"].(string)
-	worker_key := jsondata["worker_key"].(string)
-	worker_role := jsondata["worker_role"].(string)
 
 	//added to tasks_pending set
 	tasks_pending_key := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + task_info["job_id"]
