@@ -168,7 +168,7 @@ func latestwork(c *gin.Context) {
 	task_latest = Sort("create_time", task_latest)
 
 	if len(task_latest) > 20 {
-		task_latest = job_latest[0:19]
+		task_latest = task_latest[0:19]
 	}
 
 	data := map[string][]map[string]interface{}{
@@ -406,4 +406,181 @@ func peekfile(c *gin.Context) {
 	}
 
 	ResponseFile(c, filename)
+}
+
+func percentage(c *gin.Context) {
+
+	r = getRedisInstance()
+	_, err := r.Ping().Result()
+	if err != nil {
+		panic(err)
+	}
+
+	//addressing_count
+	addressing_data := make(map[string]int)
+
+	statistics_task_addressing_pattern := "statistics_task_addressing-*"
+	statistics_task_addressing_keys, _ := r.Keys(statistics_task_addressing_pattern).Result()
+
+	for _, statistics_task_addressing_key := range statistics_task_addressing_keys {
+
+		addressing_tmp := strings.Split(statistics_task_addressing_key, "-")
+		addressing := addressing_tmp[len(addressing_tmp)-1]
+
+		addressing_count_tmp, _ := r.Get(statistics_task_addressing_key).Result()
+		addressing_count, _ := strconv.Atoi(addressing_count_tmp)
+
+		if _, ok := addressing_data[addressing]; !ok {
+			addressing_data[addressing] = 0
+		}
+		addressing_data[addressing] = addressing_data[addressing] + addressing_count
+
+	}
+
+	//port_count
+	port_data := make(map[string]int)
+
+	statistics_task_port_pattern := "statistics_task_port-*"
+	statistics_task_port_keys, _ := r.Keys(statistics_task_port_pattern).Result()
+
+	for _, statistics_task_port_key := range statistics_task_port_keys {
+
+		port_tmp := strings.Split(statistics_task_port_key, "-")
+		port := port_tmp[len(port_tmp)-1]
+
+		port_count_tmp, _ := r.Get(statistics_task_port_key).Result()
+		port_count, _ := strconv.Atoi(port_count_tmp)
+
+		if _, ok := port_data[port]; !ok {
+			port_data[port] = 0
+		}
+		port_data[port] = port_data[port] + port_count
+
+	}
+
+	data := map[string]interface{}{
+		"addressing": addressing_data,
+		"port":       port_data,
+	}
+
+	ResponseJson(c, 200, "ok", data)
+}
+
+func errorlist(c *gin.Context) {
+
+	r = getRedisInstance()
+	_, err := r.Ping().Result()
+	if err != nil {
+		panic(err)
+	}
+
+	//error job list
+	error_jobs := make([]map[string]interface{}, 0)
+
+	error_job_set_pattern := "error_job-*"
+	error_job_set_keys, _ := r.Keys(error_job_set_pattern).Result()
+
+	for _, error_job_set_key := range error_job_set_keys {
+
+		job_keys, _ := r.SMembers(error_job_set_key).Result()
+
+		for _, job_key := range job_keys {
+
+			item := make(map[string]interface{})
+
+			job_key_tmp := strings.Split(job_key, "-")
+
+			job_id := job_key_tmp[len(job_key_tmp)-1]
+
+			item["job_id"] = job_id
+			item["create_time"], _ = r.HGet(job_key, "create_time").Result()
+			item["length"], _ = r.HGet(job_key, "length").Result()
+
+			item["priority"], _ = r.HGet(job_key, "priority").Result()
+			item["description"], _ = r.HGet(job_key, "description").Result()
+			item["encrypt_job_key"] = Encrypt(job_key)
+
+			error_jobs = append(error_jobs, item)
+
+		}
+	}
+
+	//error jobs sort by create_time
+	error_jobs = Sort("create_time", error_jobs)
+	if len(error_jobs) > 20 {
+		error_jobs = error_jobs[0:19]
+	}
+
+	//error task list
+
+	error_tasks := make([]map[string]interface{}, 0)
+
+	error_task_set_pattern := "error_task-*"
+	error_task_set_keys, _ := r.Keys(error_task_set_pattern).Result()
+
+	for _, error_task_set_key := range error_task_set_keys {
+
+		tasks, _ := r.SMembers(error_task_set_key).Result()
+
+		for _, task_key := range tasks {
+			worker_tmp := strings.Split(task_key, "-")
+			worker_group := worker_tmp[1]
+			worker_key := worker_tmp[2]
+			worker_role := worker_tmp[3]
+			job_id := worker_tmp[4]
+
+			job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
+
+			job_exist, _ := r.HExists(job_key, "description").Result()
+
+			if job_exist == false {
+				r.SRem(error_task_set_key, task_key)
+				continue
+			}
+
+			item := make(map[string]interface{})
+
+			item["job_id"] = job_id
+
+			item["description"], _ = r.HGet(job_key, "description").Result()
+
+			start_time_exist, _ := r.HExists(task_key, "start_time").Result()
+			if start_time_exist == false {
+				//ignore deleted task
+				continue
+			}
+
+			addressing, _ := r.HGet(task_key, "addressing").Result()
+			if addressing == "binary" {
+				item["data"] = "BINARY"
+			} else {
+				item["data"], _ = r.HGet(task_key, "data").Result()
+			}
+
+			item["port"], _ = r.HGet(task_key, "port").Result()
+			item["addressing"] = addressing
+			item["create_time"], _ = r.HGet(task_key, "create_time").Result()
+			item["start_time"], _ = r.HGet(task_key, "start_time").Result()
+			item["job_access_key"] = Encrypt(job_key)
+			item["task_access_key"] = Encrypt(task_key)
+
+			error_tasks = append(error_tasks, item)
+		}
+
+	}
+
+	//error tasks sort by create_time
+	error_tasks = Sort("create_time", error_tasks)
+
+	if len(error_tasks) > 20 {
+		error_tasks = error_tasks[0:19]
+	}
+
+	data := map[string][]map[string]interface{}{
+		"error_jobs":  error_jobs,
+		"error_tasks": error_tasks,
+	}
+
+	ResponseJson(c, 200, "ok", data)
+
 }

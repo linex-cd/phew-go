@@ -67,6 +67,8 @@ func LoadRouter(g *gin.Engine) *gin.Engine {
 	g.GET("/state/peekjob", peekjob)
 	g.GET("/state/peektask", peektask)
 	g.GET("/state/peekfile", peekfile)
+	g.GET("/state/percentage", percentage)
+	g.GET("/state/errorlist", errorlist)
 
 	return g
 }
