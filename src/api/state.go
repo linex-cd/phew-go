@@ -3,6 +3,7 @@ package main
 //api for monitor
 
 import (
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -84,20 +85,20 @@ func latestwork(c *gin.Context) {
 	job_total_pattern := "job-*"
 	jobs, _ := r.Keys(job_total_pattern).Result()
 
-	for _, jobKey := range jobs {
+	for _, job_key := range jobs {
 
-		jobKey_tmp := strings.Split(jobKey, "-")
-		job_id := jobKey_tmp[len(jobKey_tmp)-1]
+		job_key_tmp := strings.Split(job_key, "-")
+		job_id := job_key_tmp[len(job_key_tmp)-1]
 
 		item := make(map[string]interface{})
 
 		item["job_id"] = job_id
-		item["create_time"], _ = r.HGet(jobKey, "create_time").Result()
-		item["length"], _ = r.HGet(jobKey, "length").Result()
+		item["create_time"], _ = r.HGet(job_key, "create_time").Result()
+		item["length"], _ = r.HGet(job_key, "length").Result()
 
-		item["priority"], _ = r.HGet(jobKey, "priority").Result()
-		item["description"], _ = r.HGet(jobKey, "description").Result()
-		item["encrypt_jobKey"] = Encrypt(jobKey)
+		item["priority"], _ = r.HGet(job_key, "priority").Result()
+		item["description"], _ = r.HGet(job_key, "description").Result()
+		item["encrypt_job_key"] = Encrypt(job_key)
 
 		job_latest = append(job_latest, item)
 
@@ -117,14 +118,14 @@ func latestwork(c *gin.Context) {
 
 	for _, tasks_pending_set_key := range tasks_pending_set_keys {
 
-		jobKey := "job-" + tasks_pending_set_key[14:]
-		jobKey_tmp := strings.Split(jobKey, "-")
+		job_key := "job-" + tasks_pending_set_key[14:]
+		job_key_tmp := strings.Split(job_key, "-")
 
-		job_id := jobKey_tmp[len(jobKey_tmp)-1]
+		job_id := job_key_tmp[len(job_key_tmp)-1]
 
 		tasks, _ := r.SMembers(tasks_pending_set_key).Result()
 
-		job_exist, _ := r.HExists(jobKey, "description").Result()
+		job_exist, _ := r.HExists(job_key, "description").Result()
 
 		for _, task_key := range tasks {
 
@@ -137,7 +138,7 @@ func latestwork(c *gin.Context) {
 
 			item["job_id"] = job_id
 
-			item["description"], _ = r.HGet(jobKey, "description").Result()
+			item["description"], _ = r.HGet(job_key, "description").Result()
 
 			start_time_exist, _ := r.HExists(task_key, "start_time").Result()
 			if start_time_exist == false {
@@ -156,7 +157,7 @@ func latestwork(c *gin.Context) {
 			item["addressing"] = addressing
 			item["create_time"], _ = r.HGet(task_key, "create_time").Result()
 			item["start_time"], _ = r.HGet(task_key, "start_time").Result()
-			item["job_access_key"] = Encrypt(jobKey)
+			item["job_access_key"] = Encrypt(job_key)
 			item["task_access_key"] = Encrypt(task_key)
 
 			task_latest = append(task_latest, item)
@@ -240,4 +241,169 @@ func jobcounter(c *gin.Context) {
 
 	ResponseJson(c, 200, "ok", data)
 
+}
+
+func nodecounter(c *gin.Context) {
+
+	r = getRedisInstance()
+	_, err := r.Ping().Result()
+	if err != nil {
+		panic(err)
+	}
+
+	vendor_pattern := "vendor-*"
+	vendor_keys, _ := r.Keys(vendor_pattern).Result()
+	vendor_count := len(vendor_keys)
+
+	vendors := make([]map[string]string, 0)
+	for _, vendor_key := range vendor_keys {
+		item := make(map[string]string)
+
+		itemkeys, _ := r.HGetAll(vendor_key).Result()
+
+		for _, itemkey := range itemkeys {
+
+			item[itemkey], _ = r.HGet(vendor_key, itemkey).Result()
+		}
+		vendors = append(vendors, item)
+	}
+
+	worker_pattern := "worker-*"
+	worker_keys, _ := r.Keys(worker_pattern).Result()
+	worker_count := len(worker_keys)
+
+	workers := make([]map[string]string, 0)
+	for _, worker_key := range worker_keys {
+		item := make(map[string]string)
+		itemkeys, _ := r.HGetAll(worker_key).Result()
+		for _, itemkey := range itemkeys {
+
+			item[itemkey], _ = r.HGet(worker_key, itemkey).Result()
+		}
+		workers = append(workers, item)
+	}
+
+	data := map[string]interface{}{
+		"vendor_count": vendor_count,
+		"worker_count": worker_count,
+		"vendors":      vendors,
+		"workers":      workers,
+	}
+
+	ResponseJson(c, 200, "ok", data)
+
+}
+
+func peekjob(c *gin.Context) {
+
+	r = getRedisInstance()
+	_, err := r.Ping().Result()
+	if err != nil {
+		panic(err)
+	}
+
+	job_access_key := c.Param("job_access_key")
+
+	if job_access_key == "" {
+
+		ResponseJson(c, 404, "forbidden", make(map[string]string))
+		return
+	}
+
+	job_key := Decrypt(job_access_key)
+
+	job_exist, _ := r.HExists(job_key, "state").Result()
+
+	if job_exist == false {
+		ResponseJson(c, 404, "job not found", make(map[string]string))
+		return
+	}
+
+	data := make(map[string]string)
+
+	job_key_tmp := strings.Split(job_key, "-")
+	job_id := job_key_tmp[len(job_key_tmp)-1]
+
+	data["job_id"] = job_id
+
+	data["state"], _ = r.HGet(job_key, "state").Result()
+
+	data["create_time"], _ = r.HGet(job_key, "create_time").Result()
+	data["finish_time"], _ = r.HGet(job_key, "finish_time").Result()
+
+	data["vendor_id"], _ = r.HGet(job_key, "vendor_id").Result()
+	data["worker_group"], _ = r.HGet(job_key, "worker_group").Result()
+
+	data["meta"], _ = r.HGet(job_key, "meta").Result()
+	data["description"], _ = r.HGet(job_key, "description").Result()
+	data["priority"], _ = r.HGet(job_key, "priority").Result()
+
+	data["length"], _ = r.HGet(job_key, "length").Result()
+
+	ResponseJson(c, 200, "ok", data)
+}
+
+func peektask(c *gin.Context) {
+
+	r = getRedisInstance()
+	_, err := r.Ping().Result()
+	if err != nil {
+		panic(err)
+	}
+
+	task_access_key := c.Param("task_access_key")
+
+	if task_access_key == "" {
+
+		ResponseJson(c, 404, "forbidden", make(map[string]string))
+		return
+	}
+
+	task_key := Decrypt(task_access_key)
+
+	task_exist, _ := r.HExists(task_key, "state").Result()
+
+	if task_exist == false {
+		ResponseJson(c, 404, "task not found", make(map[string]string))
+		return
+	}
+
+	data := make(map[string]string)
+
+	data["state"], _ = r.HGet(task_key, "state").Result()
+	data["note"], _ = r.HGet(task_key, "note").Result()
+	//data["result"], _ = r.HGet(task_key, "result").Result()
+
+	data["create_time"], _ = r.HGet(task_key, "create_time").Result()
+	data["start_time"], _ = r.HGet(task_key, "start_time").Result()
+	data["finish_time"], _ = r.HGet(task_key, "finish_time").Result()
+
+	data["job_id"], _ = r.HGet(task_key, "job_id").Result()
+	data["priority"], _ = r.HGet(task_key, "priority").Result()
+
+	data["meta"], _ = r.HGet(task_key, "meta").Result()
+	data["addressing"], _ = r.HGet(task_key, "addressing").Result()
+	data["port"], _ = r.HGet(task_key, "port").Result()
+
+	ResponseJson(c, 200, "ok", data)
+}
+
+func peekfile(c *gin.Context) {
+
+	filename := c.Param("filename")
+	//只访问特定目录
+	if strings.Contains(filename, URI_dir) == true {
+		c.Redirect(http.StatusMovedPermanently, "/monitor/")
+	}
+
+	//禁止伪造目录
+	if strings.Contains(filename, "..") == true {
+		c.Redirect(http.StatusMovedPermanently, "/monitor/")
+	}
+
+	if Existfile(filename) == false {
+		c.Redirect(http.StatusMovedPermanently, "/monitor/")
+	}
+
+	ResponseFile(c, filename)
 }

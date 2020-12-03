@@ -1,49 +1,21 @@
 package main
 
+import (
+	"bufio"
+	"crypto/md5"
+	"encoding/base64"
+	"encoding/hex"
+	"io"
+	"os"
+	"reflect"
+	"sort"
+	"unsafe"
+)
 
-import "crypto/md5"
-import "encoding/hex"
-import "encoding/base64"
-import "unsafe"
-import "io"
-import "os"
-import "bufio"
-import "reflect"
-import "sort"
-
-/*
-def redirect(url):
-	
-	return HttpResponseRedirect(url)
-
-def response(code, msg, data):
-	
-	data = {"code":code, "msg": msg, "data": data}
-	
-	resp = HttpResponse(json.dumps(data), content_type='application/json')
-	resp["Access-Control-Allow-Origin"] = "*"
-	resp["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
-	resp["Access-Control-Max-Age"] = "1800"
-	resp["Access-Control-Allow-Headers"] = "*"
-	
-	return resp
-
-def responsefile(filename):
-	
-	downloadname = filename[filename.rfind('/')+1:]
-	
-	response = FileResponse(open(filename ,'rb'))
-	response['Content-Type']='application/octet-stream'
-	response['Content-Disposition']='attachment;filename="'+downloadname+'"'
-	
-	return response
-*/
-
-
-func Md5(str string) string  {
-    h := md5.New()
-    h.Write([]byte(str))
-    return hex.EncodeToString(h.Sum(nil))
+func Md5(str string) string {
+	h := md5.New()
+	h.Write([]byte(str))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func Encrypt(message string) string {
@@ -57,28 +29,26 @@ func Encrypt(message string) string {
 
 }
 
-func Decrypt (message string) string {
+func Decrypt(message string) string {
 
 	//BASE64Table := "IJjkKLMNO567PQX12RVW3YZaDEFGbcdefghiABCHlSTUmnopqrxyz04stuvw89+/"
 	BASE64Table := "3YZaDEFGbcdeKLMNyzfghiIJjk04stuO567PQX12RVWABCHlSTUmnopqrxvw89+/"
-	
+
 	coder := base64.NewEncoding(BASE64Table)
-    result, _ := coder.DecodeString(message)
-    return *(*string)(unsafe.Pointer(&result))
-	
+	result, _ := coder.DecodeString(message)
+	return *(*string)(unsafe.Pointer(&result))
+
 }
 
+func Readfile(filename string) string {
 
-
-func Readfile(filename string) string{
-
-	file, err := os.Open(filename) 
+	file, err := os.Open(filename)
 	if err != nil {
-		 return ""
+		return ""
 	}
 
 	defer file.Close()
- 
+
 	text := ""
 	line := bufio.NewReader(file)
 	for {
@@ -94,7 +64,6 @@ func Readfile(filename string) string{
 
 func Writefile(filename string, text string, mode string) {
 
-
 	if mode == "a" {
 		file, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND, 0666)
 
@@ -102,32 +71,30 @@ func Writefile(filename string, text string, mode string) {
 			return
 		}
 		defer file.Close()
-	
+
 		writer := bufio.NewWriter(file)
-		
+
 		writer.WriteString(text)
-	
+
 		writer.Flush()
 
-	}else if mode == "w" {
+	} else if mode == "w" {
 		file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
 
 		if err != nil {
 			return
 		}
 		defer file.Close()
-	
+
 		writer := bufio.NewWriter(file)
-		
+
 		writer.WriteString(text)
-	
+
 		writer.Flush()
 
-	}else{
+	} else {
 		return
 	}
-
-   
 
 }
 
@@ -137,58 +104,58 @@ func Existfile(filename string) bool {
 }
 
 func Filesize(filename string) int64 {
-    fi,err:=os.Stat(filename) 
-    if err == nil { 
-        return fi.Size()
-	} 
+	fi, err := os.Stat(filename)
+	if err == nil {
+		return fi.Size()
+	}
 	return -1
 }
 
 func Removefile(filename string) bool {
 
 	err := os.Remove(filename)
- 
+
 	if err != nil {
 		return false
- 
+
 	}
 	return true
 }
 
 var datapath = Data_dir + "taskcache/"
 
-func Makedirforhash(hash string){
-	filedir := datapath + hash[0:2] + "/" +  hash[2:4] + "/";
-	os.MkdirAll(filedir, os.ModePerm) 
+func Makedirforhash(hash string) {
+	filedir := datapath + hash[0:2] + "/" + hash[2:4] + "/"
+	os.MkdirAll(filedir, os.ModePerm)
 }
 
-func Filedirfromhash(hash string) string{
-	filedir := datapath + hash[0:2] + "/" +  hash[2:4] + "/";
-	return filedir;
+func Filedirfromhash(hash string) string {
+	filedir := datapath + hash[0:2] + "/" + hash[2:4] + "/"
+	return filedir
 }
 
 type MapsSort struct {
-    Key     string
-    MapList []map[string]interface{}
+	Key     string
+	MapList []map[string]interface{}
 }
 
 func (m *MapsSort) Len() int {
-    return len(m.MapList)
+	return len(m.MapList)
 }
 
 func (m *MapsSort) Less(i, j int) bool {
-    return m.MapList[i][m.Key].(int) > m.MapList[j][m.Key].(int)
+	return m.MapList[i][m.Key].(int) > m.MapList[j][m.Key].(int)
 }
 
 func (m *MapsSort) Swap(i, j int) {
-    m.MapList[i], m.MapList[j] = m.MapList[j], m.MapList[i]
+	m.MapList[i], m.MapList[j] = m.MapList[j], m.MapList[i]
 }
 
 func Sort(key string, maps []map[string]interface{}) []map[string]interface{} {
-    mapsSort := MapsSort{}
-    mapsSort.Key = key
-    mapsSort.MapList = maps
-    sort.Sort(&mapsSort)
+	mapsSort := MapsSort{}
+	mapsSort.Key = key
+	mapsSort.MapList = maps
+	sort.Sort(&mapsSort)
 
-    return mapsSort.MapList
+	return mapsSort.MapList
 }

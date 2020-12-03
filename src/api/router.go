@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"path"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +19,26 @@ func ResponseJson(c *gin.Context, code int, message string, data interface{}) {
 		Message: message,
 		Data:    data,
 	})
+}
+
+func ResponseFile(c *gin.Context, filepath string) {
+
+	fileName := path.Base(filepath)
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Content-Disposition", "attachment; filename="+fileName)
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Cache-Control", "no-cache")
+
+	if Existfile(filepath) == false {
+		ResponseJson(c, 404, "file not found", make(map[string]string))
+		return
+	}
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Content-Disposition", "attachment; filename="+fileName)
+	c.Header("Content-Transfer-Encoding", "binary")
+
+	c.File(filepath)
+	return
 }
 
 func LoadRouter(g *gin.Engine) *gin.Engine {
@@ -42,6 +63,10 @@ func LoadRouter(g *gin.Engine) *gin.Engine {
 	g.GET("/state/system", system)
 	g.GET("/state/latestwork", latestwork)
 	g.GET("/state/jobcounter", jobcounter)
+	g.GET("/state/nodecounter", nodecounter)
+	g.GET("/state/peekjob", peekjob)
+	g.GET("/state/peektask", peektask)
+	g.GET("/state/peekfile", peekfile)
 
 	return g
 }
