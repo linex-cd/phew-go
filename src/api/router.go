@@ -5,7 +5,23 @@ import (
 	"path"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 )
+
+var r *redis.Client = nil
+
+func getRedisInstance() *redis.Client {
+	if r == nil {
+		r = redis.NewClient(&redis.Options{
+			Addr:     Redis_host + ":2019",
+			Password: "",
+			DB:       0,
+		})
+
+	}
+
+	return r
+}
 
 type Response struct {
 	Code    int         `json:"code"`
@@ -69,6 +85,11 @@ func LoadRouter(g *gin.Engine) *gin.Engine {
 	g.GET("/state/peekfile", peekfile)
 	g.GET("/state/percentage", percentage)
 	g.GET("/state/errorlist", errorlist)
+
+	//task 路由
+	g.POST("/task/ping", taskping)
+	g.POST("/task/get", get)
+	g.POST("/task/finish", finish)
 
 	return g
 }

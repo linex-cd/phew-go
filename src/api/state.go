@@ -9,26 +9,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis"
+
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 )
-
-var r *redis.Client = nil
-
-func getRedisInstance() *redis.Client {
-	if r == nil {
-		r = redis.NewClient(&redis.Options{
-			Addr:     Redis_host + ":2019",
-			Password: "",
-			DB:       0,
-		})
-
-	}
-
-	return r
-}
 
 func system(c *gin.Context) {
 
