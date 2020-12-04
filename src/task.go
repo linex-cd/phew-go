@@ -153,8 +153,7 @@ func get(c *gin.Context) {
 	r.SRem(tasks_waiting_key, task_key)
 
 	//update worker node hit counter
-	worker_id_f := jsondata["worker_id"].(float64)
-	worker_id := strconv.FormatFloat(worker_id_f, 'f', 0, 64)
+	worker_id := jsondata["worker_id"].(string)
 	worker_node_key := "worker-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + worker_id
 
 	worker_node_hit_s, err := r.HGet(worker_node_key, "hit").Result()
