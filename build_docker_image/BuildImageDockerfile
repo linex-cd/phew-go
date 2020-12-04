@@ -9,7 +9,6 @@ RUN go get -u github.com/gin-gonic/gin
 RUN go get -u github.com/go-redis/redis
 RUN go get -u github.com/shirou/gopsutil
 
-RUN go mod tidy
  
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 RUN dpkg-reconfigure -f noninteractive tzdata
