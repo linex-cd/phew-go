@@ -95,11 +95,13 @@ func get(c *gin.Context) {
 	var task_key string
 	for {
 
-		task_key, err := r.RPop(work_key).Result()
+		task_key_tmp, err := r.RPop(work_key).Result()
 		if err != nil {
 			ResponseJson(c, 404, "no task", make(map[string]string))
 			return
 		}
+
+		task_key = task_key_tmp
 
 		job_id, err := r.HGet(task_key, "job_id").Result()
 		if err != nil {
@@ -193,10 +195,10 @@ func finish(c *gin.Context) {
 	worker_role := jsondata["worker_role"].(string)
 
 	//update task result and state
-	task_info := jsondata["task"].(map[string]string)
+	task_info := jsondata["task"].(map[string]interface{})
 
-	job_id := task_info["job_id"]
-	hash := task_info["hash"]
+	job_id := task_info["job_id"].(string)
+	hash := task_info["hash"].(string)
 
 	job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
 
@@ -229,7 +231,7 @@ func finish(c *gin.Context) {
 
 	//delete binary tmp file
 	if task_info["addressing"] == "binary" {
-		taskdata_filename := Filedirfromhash(task_info["hash"]) + task_info["hash"] + ".taskdata"
+		taskdata_filename := Filedirfromhash(task_info["hash"].(string)) + task_info["hash"].(string) + ".taskdata"
 		if Existfile(taskdata_filename) == true {
 			Removefile(taskdata_filename)
 		}

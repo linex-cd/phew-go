@@ -25,7 +25,7 @@ func getRedisInstance() *redis.Client {
 
 type Response struct {
 	Code    int         `json:"code"`
-	Message string      `json:"message"`
+	Message string      `json:"msg"`
 	Data    interface{} `json:"data"`
 }
 

@@ -183,6 +183,7 @@ func assign(c *gin.Context) {
 				}
 
 			}
+
 			continue
 		}
 
@@ -197,7 +198,7 @@ func assign(c *gin.Context) {
 		}
 
 		//allocate task to work priority list
-		work_key := "work-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + strconv.FormatFloat(job_info["priority"].(float64), 'E', -1, 64)
+		work_key := "work-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + strconv.FormatFloat(job_info["priority"].(float64), 'f', -1, 64)
 		r.LPush(work_key, task_key)
 
 		//add task to tasks_waiting to wait for job state check
@@ -243,14 +244,14 @@ func delete(c *gin.Context) {
 	worker_key := jsondata["worker_key"].(string)
 	worker_role := jsondata["worker_role"].(string)
 
-	job_info := jsondata["job"].(map[string]string)
+	job_info := jsondata["job"].(map[string]interface{})
 
 	//set state to deleted
-	job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"]
+	job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
 	r.HSet(job_key, "state", "deleted")
 
 	//seek all task in job and delete
-	task_key_pattern := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"] + "-*"
+	task_key_pattern := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-*"
 	task_keys, _ := r.Keys(task_key_pattern).Result()
 
 	for _, task_key := range task_keys {
@@ -302,7 +303,11 @@ func done(c *gin.Context) {
 		done_job_keys = append(done_job_keys, job_key)
 	}
 
-	ResponseJson(c, 200, "ok", done_job_keys)
+	data := make(map[string]interface{})
+
+	data["done"] = done_job_keys
+
+	ResponseJson(c, 200, "ok", data)
 }
 
 func detail(c *gin.Context) {
@@ -327,9 +332,9 @@ func detail(c *gin.Context) {
 	worker_key := jsondata["worker_key"].(string)
 	worker_role := jsondata["worker_role"].(string)
 
-	job_info := jsondata["job"].(map[string]string)
+	job_info := jsondata["job"].(map[string]interface{})
 
-	job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"]
+	job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
 
 	data := make(map[string]interface{})
 
@@ -349,7 +354,7 @@ func detail(c *gin.Context) {
 	//read result from task
 	tasklist := make([]map[string]string, 0)
 
-	task_key_pattern := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"] + "-*"
+	task_key_pattern := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-*"
 	task_keys, _ := r.Keys(task_key_pattern).Result()
 
 	for _, task_key := range task_keys {
@@ -407,7 +412,7 @@ func read(c *gin.Context) {
 	worker_key := jsondata["worker_key"].(string)
 	worker_role := jsondata["worker_role"].(string)
 
-	job_info := jsondata["job"].(map[string]string)
+	job_info := jsondata["job"].(map[string]interface{})
 
 	//mark a job as read by remove from set
 	jobs_done_key := "jobs_done-" + worker_group + "-" + worker_key + "-" + worker_role
