@@ -20,7 +20,7 @@ function showjob(job_access_key){
 			}
 			
 			var text = 'ID：' + data['job_id'] + '\n';
-			text = text + '/state: ' + data['/state'] + '\n';
+			text = text + 'state: ' + data['state'] + '\n';
 			text = text + 'Create Time: ' + create_time + '\n';
 			text = text + 'Finish Time: ' + finish_time + '\n';
 			text = text + 'Vendor ID: ' + data['vendor_id'] + '\n';
@@ -64,7 +64,7 @@ function showtask(task_access_key){
 			}
 			
 			var text = 'ID：' + data['job_id'] + '\n';
-			text = text + '/state: ' + data['/state'] + '\n';
+			text = text + 'state: ' + data['state'] + '\n';
 			text = text + 'Note: ' + data['note'] + '\n';
 			text = text + 'Create Time: ' + create_time + '\n';
 			text = text + 'Start Time: ' + start_time + '\n';
@@ -380,7 +380,7 @@ function showtask(task_access_key){
 				var item = workers[i]
 				
 				var isonline = ''
-				if (item['/state']=='online'){
+				if (item['state']=='online'){
 					isonline = 'checked'
 				}
 				
@@ -435,7 +435,7 @@ function showtask(task_access_key){
 				var item = vendors[i]
 				
 				var isonline = ''
-				if (item['/state']=='online'){
+				if (item['state']=='online'){
 					isonline = 'checked'
 				}
 				
