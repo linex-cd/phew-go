@@ -29,12 +29,18 @@ func system(c *gin.Context) {
 	memory := int(memInfo.UsedPercent)
 
 	//systemdisk
-	sysdiskInfo, _ := disk.Usage(System_disk)
-	systemdisk := int(sysdiskInfo.UsedPercent)
+	systemdisk := 0
+	sysdiskInfo, err := disk.Usage(System_disk)
+	if err == nil {
+		systemdisk = int(sysdiskInfo.UsedPercent)
+	}
 
 	//datadisk
-	datadiskInfo, _ := disk.Usage(Data_disk)
-	datadisk := int(datadiskInfo.UsedPercent)
+	datadisk := 0
+	datadiskInfo, err := disk.Usage(Data_disk)
+	if err == nil {
+		datadisk = int(datadiskInfo.UsedPercent)
+	}
 
 	//GPU
 	gpu := 90
@@ -85,12 +91,13 @@ func latestwork(c *gin.Context) {
 		item["description"], _ = r.HGet(job_key, "description").Result()
 		item["encrypt_job_key"] = Encrypt(job_key)
 
+		item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
 		job_latest = append(job_latest, item)
 
 	}
 
 	//job_latest sort by create_time
-	job_latest = Sort("create_time", job_latest)
+	job_latest = Sort("create_time_i", job_latest)
 	if len(job_latest) > 20 {
 		job_latest = job_latest[0:19]
 	}
@@ -145,12 +152,13 @@ func latestwork(c *gin.Context) {
 			item["job_access_key"] = Encrypt(job_key)
 			item["task_access_key"] = Encrypt(task_key)
 
+			item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
 			task_latest = append(task_latest, item)
 		}
 	}
 
 	//task_latest sort by create_time
-	task_latest = Sort("create_time", task_latest)
+	task_latest = Sort("create_time_i", task_latest)
 
 	if len(task_latest) > 20 {
 		task_latest = task_latest[0:19]
@@ -244,11 +252,11 @@ func nodecounter(c *gin.Context) {
 	for _, vendor_key := range vendor_keys {
 		item := make(map[string]string)
 
-		itemkeys, _ := r.HGetAll(vendor_key).Result()
+		items, _ := r.HGetAll(vendor_key).Result()
 
-		for _, itemkey := range itemkeys {
+		for itemkey, itemvalue := range items {
 
-			item[itemkey], _ = r.HGet(vendor_key, itemkey).Result()
+			item[itemkey] = itemvalue
 		}
 		vendors = append(vendors, item)
 	}
@@ -260,10 +268,12 @@ func nodecounter(c *gin.Context) {
 	workers := make([]map[string]string, 0)
 	for _, worker_key := range worker_keys {
 		item := make(map[string]string)
-		itemkeys, _ := r.HGetAll(worker_key).Result()
-		for _, itemkey := range itemkeys {
 
-			item[itemkey], _ = r.HGet(worker_key, itemkey).Result()
+		items, _ := r.HGetAll(worker_key).Result()
+
+		for itemkey, itemvalue := range items {
+
+			item[itemkey] = itemvalue
 		}
 		workers = append(workers, item)
 	}
@@ -489,13 +499,14 @@ func errorlist(c *gin.Context) {
 			item["description"], _ = r.HGet(job_key, "description").Result()
 			item["encrypt_job_key"] = Encrypt(job_key)
 
+			item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
 			error_jobs = append(error_jobs, item)
 
 		}
 	}
 
 	//error jobs sort by create_time
-	error_jobs = Sort("create_time", error_jobs)
+	error_jobs = Sort("create_time_i", error_jobs)
 	if len(error_jobs) > 20 {
 		error_jobs = error_jobs[0:19]
 	}
@@ -553,13 +564,14 @@ func errorlist(c *gin.Context) {
 			item["job_access_key"] = Encrypt(job_key)
 			item["task_access_key"] = Encrypt(task_key)
 
+			item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
 			error_tasks = append(error_tasks, item)
 		}
 
 	}
 
 	//error tasks sort by create_time
-	error_tasks = Sort("create_time", error_tasks)
+	error_tasks = Sort("create_time_i", error_tasks)
 
 	if len(error_tasks) > 20 {
 		error_tasks = error_tasks[0:19]

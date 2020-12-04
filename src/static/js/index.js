@@ -229,17 +229,17 @@ function showtask(task_access_key){
 			for(var i = 0; i < len; i++){
 				var item = error_jobs[i];
 				var time = new Date();
-				time.setTime(parseInt(item[0])*1000);
+				time.setTime(parseInt(item['create_time'])*1000);
 				var ts = time.toLocaleString();
-				var priority = item[3];
+				var priority = item['priority'];
 				if (parseInt(priority) > 5)
 				{
 					priority = priority + "*";
 				}
 				var str = '<tr>\
-								<td class="f-500 c-cyan">'+item[2]+'</td>\
-								<td ><a href="javascript:void(0);" onclick="showjob(\''+item[5]+'\')">['+priority+']'+item[4]+'</a>&nbsp;&nbsp;&nbsp;<span style="color:gray;font-size:12px">'+ts+'<span></td>\
-								<td class="f-500 c-cyan">'+item[1]+'</td>\
+								<td class="f-500 c-cyan">'+item['job_id']+'</td>\
+								<td ><a href="javascript:void(0);" onclick="showjob(\''+item['encrypt_job_key']+'\')">['+priority+']'+item['description']+'</a>&nbsp;&nbsp;&nbsp;<span style="color:gray;font-size:12px">'+ts+'<span></td>\
+								<td class="f-500 c-cyan">'+item['length']+'</td>\
 							</tr>'
 				error_job_htmlstr = str + error_job_htmlstr
 			}

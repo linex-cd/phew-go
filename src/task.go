@@ -29,8 +29,7 @@ func taskping(c *gin.Context) {
 
 	json.Unmarshal([]byte(rawdata), &jsondata)
 
-	worker_id_f := jsondata["worker_id"].(float64)
-	worker_id := strconv.FormatFloat(worker_id_f, 'f', 0, 64)
+	worker_id := jsondata["worker_id"].(string)
 
 	worker_group := jsondata["worker_group"].(string)
 	worker_key := jsondata["worker_key"].(string)
