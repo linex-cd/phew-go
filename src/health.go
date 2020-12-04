@@ -1,58 +1,70 @@
-# api for vendor
+package main
 
-from app.init import *
+import (
+	"fmt"
+	"strconv"
+	"time"
+)
 
-def health_thread(timeout = 300):
-	print("started health thread, timeout = %d" % timeout)
-	
-	while True:
-		time.sleep(30)
-		vendor_pattern = 'vendor-*'
-		vendor_keys = r.keys(vendor_pattern)
+//daemon for timeout task
 
-		vendors = []
-		for vendor_key in vendor_keys:
-			ping_time = int(r.hget(vendor_key, 'ping_time').decode())
-			state = r.hget(vendor_key, 'state').decode()
-			if state == 'online':
-				if time.time() - ping_time > timeout:
-					r.hset(vendor_key, 'state', 'offline')
-				#endif
-			#endif
-			if state == 'offline':
-				if time.time() - ping_time < timeout:
-					r.hset(vendor_key, 'state', 'online')
-				#endif
-			#endif
-		#endfor
-		
-		
-		worker_pattern = 'worker-*'
-		worker_keys = r.keys(worker_pattern)
+//timeout = 300
 
-		workers = []
-		for worker_key in worker_keys:
-			ping_time = int(r.hget(worker_key, 'ping_time').decode())
-			state = r.hget(worker_key, 'state').decode()
-			if state == 'online':
-				if time.time() - ping_time > timeout:
-					r.hset(worker_key, 'state', 'offline')
-				#endif
-			#endif
-			if state == 'offline':
-				if time.time() - ping_time < timeout:
-					r.hset(worker_key, 'state', 'online')
-				#endif
-			#endif
-		#endfor
-		
-		
-		#endfor
+func health_thread(timeout int64) {
 
-	#endwhile
-if __name__ == '__main__':
-	health_thread()
-#end
+	r = getRedisInstance()
+	_, err := r.Ping().Result()
+	if err != nil {
+		panic(err)
+	}
 
+	fmt.Println("started health thread, timeout = ", timeout)
 
+	for {
 
+		time.Sleep(30)
+		vendor_pattern := "vendor-*"
+		vendor_keys, _ := r.Keys(vendor_pattern).Result()
+
+		for _, vendor_key := range vendor_keys {
+			ping_time, _ := r.HGet(vendor_key, "ping_time").Result()
+			ping_time_i32, _ := strconv.Atoi(ping_time)
+			ping_time_i := int64(ping_time_i32)
+
+			state, _ := r.HGet(vendor_key, "state").Result()
+			if state == "online" {
+				if time.Now().Unix()-ping_time_i > timeout {
+					r.HSet(vendor_key, "state", "offline")
+				}
+			}
+			if state == "offline" {
+				if time.Now().Unix()-ping_time_i < timeout {
+					r.HSet(vendor_key, "state", "online")
+				}
+			}
+		}
+
+		worker_pattern := "worker-*"
+		worker_keys, _ := r.Keys(worker_pattern).Result()
+
+		for _, worker_key := range worker_keys {
+			ping_time, _ := r.HGet(worker_key, "ping_time").Result()
+			ping_time_i32, _ := strconv.Atoi(ping_time)
+			ping_time_i := int64(ping_time_i32)
+
+			state, _ := r.HGet(worker_key, "state").Result()
+			if state == "online" {
+				if time.Now().Unix()-ping_time_i > timeout {
+					r.HSet(worker_key, "state", "offline")
+				}
+			}
+			if state == "offline" {
+				if time.Now().Unix()-ping_time_i < timeout {
+					r.HSet(worker_key, "state", "online")
+				}
+			}
+		}
+
+	}
+
+}
