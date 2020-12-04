@@ -93,9 +93,9 @@ func assign(c *gin.Context) {
 
 	r.HSet(job_key, "meta", job_info["meta"].(string))
 	r.HSet(job_key, "description", job_info["description"].(string))
-	r.HSet(job_key, "priority", job_info["priority"].(string))
+	r.HSet(job_key, "priority", job_info["priority"].(float64))
 
-	tasks := jsondata["tasks"].([]map[string]string)
+	tasks := jsondata["tasks"].([]interface{})
 
 	length := int64(len(tasks))
 	r.HSet(job_key, "length", length)
@@ -121,13 +121,14 @@ func assign(c *gin.Context) {
 	//save task records
 	ignore_count := int64(0)
 
-	for _, task_info := range tasks {
+	for index, _ := range tasks {
 
+		task_info := tasks[index].(map[string]interface{})
 		//make task records
 
-		task_info["hash"] = Md5(task_info["data"])
+		task_info["hash"] = Md5(task_info["data"].(string))
 
-		task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-" + task_info["hash"]
+		task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-" + task_info["hash"].(string)
 
 		r.HSet(task_key, "state", "assigned")
 		r.HSet(task_key, "note", "")
@@ -149,10 +150,10 @@ func assign(c *gin.Context) {
 		r.HSet(task_key, "port", task_info["port"])
 
 		//task addressing and port count statistics
-		statistics_task_addressing_key := statistics_task_addressing_key_base + "-" + task_info["addressing"]
+		statistics_task_addressing_key := statistics_task_addressing_key_base + "-" + task_info["addressing"].(string)
 		r.IncrBy(statistics_task_addressing_key, 1)
 
-		statistics_task_port_key := statistics_task_port_key_base + "-" + task_info["port"]
+		statistics_task_port_key := statistics_task_port_key_base + "-" + task_info["port"].(string)
 		r.IncrBy(statistics_task_port_key, 1)
 
 		//skip ignore task
@@ -187,16 +188,16 @@ func assign(c *gin.Context) {
 
 		//save binary to disk for tmp use
 		if task_info["addressing"] == "binary" {
-			taskdata_filename := Filedirfromhash(task_info["hash"]) + task_info["hash"] + ".taskdata"
-			Makedirforhash(task_info["hash"])
-			Writefile(taskdata_filename, task_info["data"], "w")
+			taskdata_filename := Filedirfromhash(task_info["hash"].(string)) + task_info["hash"].(string) + ".taskdata"
+			Makedirforhash(task_info["hash"].(string))
+			Writefile(taskdata_filename, task_info["data"].(string), "w")
 			task_info["data"] = ""
 		} else {
 			r.HSet(task_key, "data", task_info["data"])
 		}
 
 		//allocate task to work priority list
-		work_key := "work-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["priority"].(string)
+		work_key := "work-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + strconv.FormatFloat(job_info["priority"].(float64), 'E', -1, 64)
 		r.LPush(work_key, task_key)
 
 		//add task to tasks_waiting to wait for job state check
