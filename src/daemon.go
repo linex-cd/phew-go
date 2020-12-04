@@ -11,7 +11,7 @@ import (
 
 //timeout = 60, try_times_limit = 3
 
-func deamon_thread(timeout int64, try_times_limit int) {
+func daemon_thread(timeout int64, try_times_limit int) {
 
 	r = getRedisInstance()
 	_, err := r.Ping().Result()

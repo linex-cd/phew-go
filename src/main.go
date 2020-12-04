@@ -1,25 +1,26 @@
 package main
 
-import "net/http"
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
 
-//build
-//go run config.go util.go state.go router.go main.go
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
+
+	go health_thread(300)
+	go daemon_thread(60, 3)
+
 	engine := gin.Default()
-	
-	
+
 	engine.Use(gin.Recovery())
-    // 404
-    engine.NoRoute(func (c *gin.Context)  {
-        c.String(http.StatusNotFound, "404 not found");
-    })
+	// 404
+	engine.NoRoute(func(c *gin.Context) {
+		c.String(http.StatusNotFound, "404 not found")
+	})
 
 	LoadRouter(engine)
 
-	
-	
 	// Listen and serve on 0.0.0.0:80
 	engine.Run("0.0.0.0:2020")
 }
