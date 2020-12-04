@@ -287,7 +287,7 @@ func peekjob(c *gin.Context) {
 		panic(err)
 	}
 
-	job_access_key := c.Param("job_access_key")
+	job_access_key := c.DefaultQuery("job_access_key", "")
 
 	if job_access_key == "" {
 
@@ -336,7 +336,7 @@ func peektask(c *gin.Context) {
 		panic(err)
 	}
 
-	task_access_key := c.Param("task_access_key")
+	task_access_key := c.DefaultQuery("task_access_key", "")
 
 	if task_access_key == "" {
 
@@ -375,7 +375,11 @@ func peektask(c *gin.Context) {
 
 func peekfile(c *gin.Context) {
 
-	filename := c.Param("filename")
+	filename := c.DefaultQuery("filename", "")
+	if filename == "" {
+		c.Redirect(http.StatusMovedPermanently, "/monitor/")
+	}
+
 	//只访问特定目录
 	if strings.Contains(filename, URI_dir) == true {
 		c.Redirect(http.StatusMovedPermanently, "/monitor/")

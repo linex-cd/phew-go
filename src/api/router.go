@@ -75,6 +75,13 @@ func LoadRouter(g *gin.Engine) *gin.Engine {
 		c.Redirect(http.StatusMovedPermanently, "/monitor/")
 	})
 
+	g.GET("/hello", func(c *gin.Context) {
+
+		name := c.DefaultQuery("name", "")
+		ResponseJson(c, 200, "ok", name)
+
+	})
+
 	//state 路由
 	g.GET("/state/system", system)
 	g.GET("/state/latestwork", latestwork)
