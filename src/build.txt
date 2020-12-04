@@ -1,5 +1,4 @@
 go mod init phew/api
 
-go build ./ && api.exe
-go build ./
+go build  -ldflags "-s -w"
 api.exe
