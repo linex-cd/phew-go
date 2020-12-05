@@ -19,7 +19,10 @@ func getRedisInstance() *redis.Client {
 		})
 
 	}
-
+	_, err := r.Ping().Result()
+	if err != nil {
+		panic(err)
+	}
 	return r
 }
 

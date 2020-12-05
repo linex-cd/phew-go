@@ -65,10 +65,6 @@ func system(c *gin.Context) {
 func latestwork(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	//job latest
 	job_latest := make([]map[string]interface{}, 0)
@@ -176,10 +172,6 @@ func latestwork(c *gin.Context) {
 func jobcounter(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	//job_total
 	statistics_job_total_pattern := "statistics_job_total-*"
@@ -239,10 +231,6 @@ func jobcounter(c *gin.Context) {
 func nodecounter(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	vendor_pattern := "vendor-*"
 	vendor_keys, _ := r.Keys(vendor_pattern).Result()
@@ -292,10 +280,6 @@ func nodecounter(c *gin.Context) {
 func peekjob(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	job_access_key := c.DefaultQuery("job_access_key", "")
 
@@ -341,10 +325,6 @@ func peekjob(c *gin.Context) {
 func peektask(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	task_access_key := c.DefaultQuery("task_access_key", "")
 
@@ -410,10 +390,6 @@ func peekfile(c *gin.Context) {
 func percentage(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	//addressing_count
 	addressing_data := make(map[string]int)
@@ -468,10 +444,6 @@ func percentage(c *gin.Context) {
 func errorlist(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	//error job list
 	error_jobs := make([]map[string]interface{}, 0)

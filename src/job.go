@@ -13,10 +13,6 @@ import (
 func jobping(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	rawdata, err := c.GetRawData()
 	if err != nil {
@@ -56,10 +52,6 @@ func jobping(c *gin.Context) {
 func assign(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	rawdata, err := c.GetRawData()
 	if err != nil {
@@ -225,10 +217,6 @@ func assign(c *gin.Context) {
 func delete(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	rawdata, err := c.GetRawData()
 	if err != nil {
@@ -274,10 +262,6 @@ func delete(c *gin.Context) {
 func done(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	rawdata, err := c.GetRawData()
 	if err != nil {
@@ -313,10 +297,6 @@ func done(c *gin.Context) {
 func detail(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	rawdata, err := c.GetRawData()
 	if err != nil {
@@ -393,10 +373,6 @@ func detail(c *gin.Context) {
 func read(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	rawdata, err := c.GetRawData()
 	if err != nil {
@@ -425,11 +401,6 @@ func read(c *gin.Context) {
 func retry(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
-
 	rawdata, err := c.GetRawData()
 	if err != nil {
 		ResponseJson(c, 400, "error", "bad request")

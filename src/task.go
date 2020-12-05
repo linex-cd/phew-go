@@ -14,10 +14,6 @@ import (
 func taskping(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	rawdata, err := c.GetRawData()
 	if err != nil {
@@ -57,10 +53,6 @@ func taskping(c *gin.Context) {
 func get(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	rawdata, err := c.GetRawData()
 	if err != nil {
@@ -175,10 +167,6 @@ func get(c *gin.Context) {
 func finish(c *gin.Context) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	rawdata, err := c.GetRawData()
 	if err != nil {

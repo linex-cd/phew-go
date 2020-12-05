@@ -13,10 +13,6 @@ import (
 func health_thread(timeout int64) {
 
 	r = getRedisInstance()
-	_, err := r.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
 
 	fmt.Println("started health thread, timeout = ", timeout)
 
