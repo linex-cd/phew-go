@@ -371,7 +371,7 @@ func peekfile(c *gin.Context) {
 	}
 
 	//只访问特定目录
-	if strings.Contains(filename, URI_dir) == true {
+	if strings.Contains(filename, URI_dir) == false {
 		c.Redirect(http.StatusMovedPermanently, "/monitor/")
 	}
 
