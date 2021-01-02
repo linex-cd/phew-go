@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
@@ -453,7 +454,16 @@ func errorlist(c *gin.Context) {
 
 	for _, error_job_set_key := range error_job_set_keys {
 
-		job_keys, _ := r.SMembers(error_job_set_key).Result()
+		time_now := int(time.Now().Unix())
+		error_ttl, _ := strconv.Atoi(Error_TTL)
+		time_ttl := time_now - error_ttl
+
+		zrangeby := redis.ZRangeBy{
+			Min: strconv.Itoa(time_ttl),
+			Max: strconv.Itoa(time_now),
+		}
+
+		job_keys, _ := r.ZRangeByScore(error_job_set_key, zrangeby).Result()
 
 		for _, job_key := range job_keys {
 
@@ -492,7 +502,16 @@ func errorlist(c *gin.Context) {
 
 	for _, error_task_set_key := range error_task_set_keys {
 
-		tasks, _ := r.SMembers(error_task_set_key).Result()
+		time_now := int(time.Now().Unix())
+		error_ttl, _ := strconv.Atoi(Error_TTL)
+		time_ttl := time_now - error_ttl
+
+		zrangeby := redis.ZRangeBy{
+			Min: strconv.Itoa(time_ttl),
+			Max: strconv.Itoa(time_now),
+		}
+
+		tasks, _ := r.ZRangeByScore(error_task_set_key, zrangeby).Result()
 
 		for _, task_key := range tasks {
 			worker_tmp := strings.Split(task_key, "-")
@@ -506,7 +525,7 @@ func errorlist(c *gin.Context) {
 			job_exist, _ := r.HExists(job_key, "description").Result()
 
 			if job_exist == false {
-				r.SRem(error_task_set_key, task_key)
+				r.ZRem(error_task_set_key, task_key)
 				continue
 			}
 

@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-redis/redis"
 )
 
 //daemon for timeout task
@@ -104,12 +106,20 @@ func daemon_thread(timeout int64, try_times_limit int) {
 						//remove from  pending set
 						r.SRem(tasks_pending_key, task_key)
 
-						//send to error list
+						//send to error set
 						error_job_set_key := "error_job-" + worker_group + "-" + worker_key + "-" + worker_role
-						r.SAdd(error_job_set_key, job_key)
+						error_job_member := redis.Z{
+							Score:  float64(time.Now().Unix()),
+							Member: job_key,
+						}
+						r.ZAdd(error_job_set_key, error_job_member)
 
 						error_task_set_key := "error_task-" + worker_group + "-" + worker_key + "-" + worker_role
-						r.SAdd(error_task_set_key, task_key)
+						error_task_member := redis.Z{
+							Score:  float64(time.Now().Unix()),
+							Member: task_key,
+						}
+						r.ZAdd(error_task_set_key, error_task_member)
 
 						//if last one task is timeout, the mark the job as done
 						//check if tasks_waiting and tasks_pending set are empty

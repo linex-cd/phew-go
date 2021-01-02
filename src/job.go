@@ -238,6 +238,10 @@ func delete(c *gin.Context) {
 	job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
 	r.HSet(job_key, "state", "deleted")
 
+	//set deleted job ttl
+	timeout_ttl, _ := strconv.Atoi(Error_TTL)
+	r.Expire(job_key, time.Second*time.Duration(timeout_ttl))
+
 	//seek all task in job and delete
 	task_key_pattern := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-*"
 	task_keys, _ := r.Keys(task_key_pattern).Result()
@@ -249,8 +253,8 @@ func delete(c *gin.Context) {
 		//delete task excluding from error list
 		error_task_set_key := "error_task-" + worker_group + "-" + worker_key + "-" + worker_role
 
-		ismember, _ := r.SIsMember(error_task_set_key, task_key).Result()
-		if ismember == false {
+		_, err := r.ZRank(error_task_set_key, task_key).Result()
+		if err == nil {
 			r.HDel(task_key)
 		}
 
