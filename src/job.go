@@ -13,13 +13,13 @@ import (
 
 func jobping(c *gin.Context) {
 
-	r = getRedisInstance()
-
 	rawdata, err := c.GetRawData()
 	if err != nil {
 		ResponseJson(c, 400, "error", "bad request")
 		return
 	}
+
+	r = getRedisInstance()
 
 	var jsondata map[string]interface{}
 
@@ -56,13 +56,13 @@ func jobping(c *gin.Context) {
 
 func assign(c *gin.Context) {
 
-	r = getRedisInstance()
-
 	rawdata, err := c.GetRawData()
 	if err != nil {
 		ResponseJson(c, 400, "error", "bad request")
 		return
 	}
+
+	r = getRedisInstance()
 
 	var jsondata map[string]interface{}
 
@@ -147,6 +147,9 @@ func assign(c *gin.Context) {
 	//save task records
 	ignore_count := int64(0)
 
+	//use redis pipeline
+	p := r.Pipeline()
+
 	for index, _ := range tasks {
 
 		task_info := tasks[index].(map[string]interface{})
@@ -156,24 +159,24 @@ func assign(c *gin.Context) {
 
 		task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-" + task_info["hash"].(string)
 
-		r.HSet(task_key, "state", "assigned")
-		r.HSet(task_key, "note", "")
-		r.HSet(task_key, "result", "")
+		p.HSet(task_key, "state", "assigned")
+		p.HSet(task_key, "note", "")
+		p.HSet(task_key, "result", "")
 
 		// add create timestamp
-		r.HSet(task_key, "create_time", time.Now().Unix())
-		r.HSet(task_key, "start_time", "")
-		r.HSet(task_key, "finish_time", "")
-		r.HSet(task_key, "try_times", 0)
+		p.HSet(task_key, "create_time", time.Now().Unix())
+		p.HSet(task_key, "start_time", "")
+		p.HSet(task_key, "finish_time", "")
+		p.HSet(task_key, "try_times", 0)
 
-		r.HSet(task_key, "job_id", job_info["job_id"])
-		r.HSet(task_key, "priority", job_info["priority"])
+		p.HSet(task_key, "job_id", job_info["job_id"])
+		p.HSet(task_key, "priority", job_info["priority"])
 
-		r.HSet(task_key, "hash", task_info["hash"])
+		p.HSet(task_key, "hash", task_info["hash"])
 
-		r.HSet(task_key, "meta", task_info["meta"])
-		r.HSet(task_key, "addressing", task_info["addressing"])
-		r.HSet(task_key, "port", task_info["port"])
+		p.HSet(task_key, "meta", task_info["meta"])
+		p.HSet(task_key, "addressing", task_info["addressing"])
+		p.HSet(task_key, "port", task_info["port"])
 
 		//add to the job's task set
 		task_index = task_index + 1
@@ -181,35 +184,35 @@ func assign(c *gin.Context) {
 			Score:  float64(task_index),
 			Member: task_key,
 		}
-		r.ZAdd(task_set, task_member)
+		p.ZAdd(task_set, task_member)
 
 		//task addressing and port count statistics
 		statistics_task_addressing_key := statistics_task_addressing_key_base + "-" + task_info["addressing"].(string)
-		r.IncrBy(statistics_task_addressing_key, 1)
+		p.IncrBy(statistics_task_addressing_key, 1)
 
 		statistics_task_port_key := statistics_task_port_key_base + "-" + task_info["port"].(string)
-		r.IncrBy(statistics_task_port_key, 1)
+		p.IncrBy(statistics_task_port_key, 1)
 
 		//add to statistics set
-		r.SAdd(statistics_task_addressing_key_set, statistics_task_addressing_key)
-		r.SAdd(statistics_task_port_key_set, statistics_task_port_key)
+		p.SAdd(statistics_task_addressing_key_set, statistics_task_addressing_key)
+		p.SAdd(statistics_task_port_key_set, statistics_task_port_key)
 
 		//skip ignore task
 		if task_info["port"] == "ignore" {
 			ignore_count = ignore_count + 1
-			r.HSet(task_key, "state", "done")
-			r.HSet(task_key, "note", "ignore file")
-			r.HSet(task_key, "finish_time", time.Now().Unix())
-			r.HSet(task_key, "result", "")
+			p.HSet(task_key, "state", "done")
+			p.HSet(task_key, "note", "ignore file")
+			p.HSet(task_key, "finish_time", time.Now().Unix())
+			p.HSet(task_key, "result", "")
 			if ignore_count == length {
 				//add a job to set as unread
 				jobs_done_key := "jobs_done-" + worker_group + "-" + worker_key + "-" + worker_role
 
-				r.SAdd(jobs_done_key, task_info["job_id"])
+				p.SAdd(jobs_done_key, task_info["job_id"])
 
 				//add finish timestamp
-				r.HSet(job_key, "finish_time", time.Now().Unix())
-				r.HSet(job_key, "state", "done")
+				p.HSet(job_key, "finish_time", time.Now().Unix())
+				p.HSet(job_key, "state", "done")
 
 				//job pending statistics
 				r.DecrBy(statistics_job_pending_key, 1)
@@ -224,6 +227,9 @@ func assign(c *gin.Context) {
 
 			continue
 		}
+
+		//commit redis pipeline
+		p.Exec()
 
 		//save binary to disk for tmp use
 		if task_info["addressing"] == "binary" {
@@ -262,13 +268,13 @@ func assign(c *gin.Context) {
 
 func delete(c *gin.Context) {
 
-	r = getRedisInstance()
-
 	rawdata, err := c.GetRawData()
 	if err != nil {
 		ResponseJson(c, 400, "error", "bad request")
 		return
 	}
+
+	r = getRedisInstance()
 
 	var jsondata map[string]interface{}
 
@@ -294,6 +300,9 @@ func delete(c *gin.Context) {
 
 	task_keys, _ := r.ZRange(task_set, 0, -1).Result()
 
+	//use redis pipeline
+	p := r.Pipeline()
+
 	for _, task_key := range task_keys {
 		//only mark as delete state
 		//r.HSet(task_key, "state", "deleted")
@@ -303,23 +312,26 @@ func delete(c *gin.Context) {
 
 		_, err := r.ZRank(error_task_set_key, task_key).Result()
 		if err == nil {
-			r.HDel(task_key)
+			p.HDel(task_key)
 		}
 
 	}
+
+	//commit redis pipeline
+	p.Exec()
 
 	ResponseJson(c, 200, "ok", make(map[string]string))
 }
 
 func done(c *gin.Context) {
 
-	r = getRedisInstance()
-
 	rawdata, err := c.GetRawData()
 	if err != nil {
 		ResponseJson(c, 400, "error", "bad request")
 		return
 	}
+
+	r = getRedisInstance()
 
 	var jsondata map[string]interface{}
 
@@ -348,13 +360,13 @@ func done(c *gin.Context) {
 
 func detail(c *gin.Context) {
 
-	r = getRedisInstance()
-
 	rawdata, err := c.GetRawData()
 	if err != nil {
 		ResponseJson(c, 400, "error", "bad request")
 		return
 	}
+
+	r = getRedisInstance()
 
 	var jsondata map[string]interface{}
 
@@ -454,12 +466,13 @@ func read(c *gin.Context) {
 
 func retry(c *gin.Context) {
 
-	r = getRedisInstance()
 	rawdata, err := c.GetRawData()
 	if err != nil {
 		ResponseJson(c, 400, "error", "bad request")
 		return
 	}
+
+	r = getRedisInstance()
 
 	var jsondata map[string]interface{}
 
@@ -476,6 +489,9 @@ func retry(c *gin.Context) {
 
 	task_keys, _ := r.ZRange(task_set, 0, -1).Result()
 
+	//use redis pipeline
+	p := r.Pipeline()
+
 	//repush to the right of list if timeout
 	for _, task_key := range task_keys {
 		task_state, _ := r.HGet(task_key, "state").Result()
@@ -485,23 +501,26 @@ func retry(c *gin.Context) {
 			priority, _ := r.HGet(task_key, "priority").Result()
 			work_key := "work-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + priority
 
-			r.RPush(work_key, task_key)
+			p.RPush(work_key, task_key)
 
 		}
 
 		//remove from tasks_pending
 		tasks_pending_key := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
-		r.SRem(tasks_pending_key, task_key)
+		p.SRem(tasks_pending_key, task_key)
 
 		//remove from tasks_pending total set
 		tasks_pending_set := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role
-		r.SRem(tasks_pending_set, task_key)
+		p.SRem(tasks_pending_set, task_key)
 
 		//added to tasks_waiting set
 		tasks_waiting_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
-		r.SAdd(tasks_waiting_key, task_key)
+		p.SAdd(tasks_waiting_key, task_key)
 
 	}
+
+	//commit redis pipeline
+	p.Exec()
 
 	ResponseJson(c, 200, "ok", make(map[string]string))
 }
