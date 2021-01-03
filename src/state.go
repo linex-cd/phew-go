@@ -122,10 +122,10 @@ func latestwork(c *gin.Context) {
 
 	for _, task_key := range task_keys {
 
-		job_key := strings.Replace(task_key, "task-", "job-", -1)
-		job_key_tmp := strings.Split(job_key, "-")
+		tmp := strings.Split(task_key, "-")
 
-		job_id := job_key_tmp[len(job_key_tmp)-1]
+		job_key := "job-" + tmp[1] + "-" + tmp[2] + "-" + tmp[3] + "-" + tmp[4]
+		job_id := tmp[4]
 
 		job_exist, _ := r.HExists(job_key, "description").Result()
 
@@ -198,24 +198,31 @@ func jobcounter(c *gin.Context) {
 	}
 
 	//job_total
+	job_total := 0
 	statistics_job_total_key := "statistics_job_total-" + group + "-" + key + "-" + role
-	statistics_job_total, _ := r.Get(statistics_job_total_key).Result()
-	statistics_job_total_i, _ := strconv.Atoi(statistics_job_total)
-
-	job_total := statistics_job_total_i
+	statistics_job_total, err1 := r.Get(statistics_job_total_key).Result()
+	if err1 == nil {
+		statistics_job_total_i, _ := strconv.Atoi(statistics_job_total)
+		job_total = statistics_job_total_i
+	}
 
 	//task_total
+	task_total := 0
 	statistics_task_total_key := "statistics_task_total-" + group + "-" + key + "-" + role
-	statistics_task_total, _ := r.Get(statistics_task_total_key).Result()
-	statistics_task_total_i, _ := strconv.Atoi(statistics_task_total)
-
-	task_total := statistics_task_total_i
+	statistics_task_total, err2 := r.Get(statistics_task_total_key).Result()
+	if err2 == nil {
+		statistics_task_total_i, _ := strconv.Atoi(statistics_task_total)
+		task_total = statistics_task_total_i
+	}
 
 	//job_pending
+	job_pending := 0
 	statistics_job_pending_key := "statistics_job_pending-" + group + "-" + key + "-" + role
-	statistics_job_pending_pending, _ := r.Get(statistics_job_pending_key).Result()
-	statistics_job_pending_pending_i, _ := strconv.Atoi(statistics_job_pending_pending)
-	job_pending := statistics_job_pending_pending_i
+	statistics_job_pending_pending, err3 := r.Get(statistics_job_pending_key).Result()
+	if err3 == nil {
+		statistics_job_pending_pending_i, _ := strconv.Atoi(statistics_job_pending_pending)
+		job_pending = statistics_job_pending_pending_i
+	}
 
 	//work_pending
 	work_key := "work-" + group + "-" + key + "-" + role
