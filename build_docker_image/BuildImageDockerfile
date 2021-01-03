@@ -1,6 +1,6 @@
 FROM golang:latest
 
-RUN cd / && wget http://download.redis.io/releases/redis-6.0.4.tar.gz && tar xzf redis-6.0.4.tar.gz && cd redis-6.0.4 && make
+#RUN cd / && wget http://download.redis.io/releases/redis-6.0.4.tar.gz && tar xzf redis-6.0.4.tar.gz && cd redis-6.0.4 && make
 
 RUN go env -w GO111MODULE=on
 RUN go env -w GOPROXY=https://goproxy.cn,direct

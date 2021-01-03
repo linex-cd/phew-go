@@ -19,8 +19,8 @@ func health_thread(timeout int64) {
 	for {
 
 		time.Sleep(30)
-		vendor_pattern := "vendor-*"
-		vendor_keys, _ := r.Keys(vendor_pattern).Result()
+		vendor_set_all := "vendor_set_all"
+		vendor_keys, _ := r.SMembers(vendor_set_all).Result()
 
 		for _, vendor_key := range vendor_keys {
 			ping_time, _ := r.HGet(vendor_key, "ping_time").Result()
@@ -40,8 +40,8 @@ func health_thread(timeout int64) {
 			}
 		}
 
-		worker_pattern := "worker-*"
-		worker_keys, _ := r.Keys(worker_pattern).Result()
+		worker_set_all := "worker_set_all"
+		worker_keys, _ := r.Keys(worker_set_all).Result()
 
 		for _, worker_key := range worker_keys {
 			ping_time, _ := r.HGet(worker_key, "ping_time").Result()

@@ -47,6 +47,10 @@ func taskping(c *gin.Context) {
 	worker_set := "worker_set-" + worker_group + "-" + worker_key + "-" + worker_role
 	r.SAdd(worker_set, worker_node_key)
 
+	//add to worker all set
+	worker_set_all := "worker_set_all"
+	r.SAdd(worker_set_all, worker_node_key)
+
 	data := "pong"
 
 	ResponseJson(c, 200, "ok", data)
@@ -144,13 +148,17 @@ func get(c *gin.Context) {
 
 	}
 
-	//added to tasks_pending
+	//add to tasks_pending
 	tasks_pending_key := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + task_info["job_id"]
 	r.SAdd(tasks_pending_key, task_key)
 
-	//added to tasks_pending total set
+	//add to tasks_pending total set
 	tasks_pending_set := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role
 	r.SAdd(tasks_pending_set, task_key)
+
+	//add to tasks_pending all set
+	tasks_pending_all := "tasks_pending_all"
+	r.SAdd(tasks_pending_all, task_key)
 
 	//remove from tasks_waiting set
 	tasks_waiting_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + task_info["job_id"]
@@ -228,6 +236,10 @@ func finish(c *gin.Context) {
 	//remove from tasks_pending total set
 	tasks_pending_set := "tasks_pending_set-" + worker_group + "-" + worker_key + "-" + worker_role
 	r.SRem(tasks_pending_set, task_key)
+
+	//remove from tasks_pending all set
+	tasks_pending_all := "tasks_pending_all"
+	r.SRem(tasks_pending_all, task_key)
 
 	tasks_waiting_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
 

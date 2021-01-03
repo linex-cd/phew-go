@@ -23,9 +23,9 @@ func daemon_thread(timeout int64, try_times_limit int) {
 		time.Sleep(30)
 
 		//seek all tasks pending
-		tasks_pending_key_pattern := "tasks_pending-*"
+		tasks_pending_all := "tasks_pending_all"
 
-		tasks_pending_keys, _ := r.Keys(tasks_pending_key_pattern).Result()
+		tasks_pending_keys, _ := r.SMembers(tasks_pending_all).Result()
 
 		for _, tasks_pending_key := range tasks_pending_keys {
 
@@ -84,6 +84,9 @@ func daemon_thread(timeout int64, try_times_limit int) {
 						//remove from pending set
 						r.SRem(tasks_pending_key, task_key)
 
+						//remove from all pending set
+						r.SRem(tasks_pending_all, task_key)
+
 						//add to waiting set
 						r.SAdd(tasks_waiting_key, task_key)
 
@@ -105,6 +108,9 @@ func daemon_thread(timeout int64, try_times_limit int) {
 
 						//remove from  pending set
 						r.SRem(tasks_pending_key, task_key)
+
+						//remove from all pending set
+						r.SRem(tasks_pending_all, task_key)
 
 						//send to error set
 						error_job_set_key := "error_job-" + worker_group + "-" + worker_key + "-" + worker_role

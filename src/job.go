@@ -48,6 +48,10 @@ func jobping(c *gin.Context) {
 	vendor_set := "vendor_set-" + worker_group + "-" + worker_key + "-" + worker_role
 	r.SAdd(vendor_set, vendor_node_key)
 
+	//add to vendor all set
+	vendor_set_all := "vendor_set_all"
+	r.SAdd(vendor_set_all, vendor_node_key)
+
 	data := "pong"
 
 	ResponseJson(c, 200, "ok", data)
@@ -512,6 +516,10 @@ func retry(c *gin.Context) {
 		//remove from tasks_pending total set
 		tasks_pending_set := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role
 		p.SRem(tasks_pending_set, task_key)
+
+		//remove from tasks_pending all set
+		tasks_pending_all := "tasks_pending_all"
+		p.SRem(tasks_pending_all, task_key)
 
 		//added to tasks_waiting set
 		tasks_waiting_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
