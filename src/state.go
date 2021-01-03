@@ -67,11 +67,26 @@ func latestwork(c *gin.Context) {
 
 	r = getRedisInstance()
 
+	group, err1 := c.Cookie("group")
+	if err1 != nil {
+		group = ""
+	}
+	key, err2 := c.Cookie("key")
+	if err2 != nil {
+		key = ""
+	}
+	role, err3 := c.Cookie("role")
+	if err3 != nil {
+		role = ""
+	}
+
 	//job latest
 	job_latest := make([]map[string]interface{}, 0)
 
-	job_total_pattern := "job-*"
-	jobs, _ := r.Keys(job_total_pattern).Result()
+	//job set of the worker role
+	job_set := "job_set-" + group + "-" + key + "-" + role
+	//jobs := r.ZRange(job_set, 0, -1)
+	jobs, _ := r.ZRevRange(job_set, 0, -1).Result()
 
 	for _, job_key := range jobs {
 
@@ -102,7 +117,7 @@ func latestwork(c *gin.Context) {
 	//task_latest
 	task_latest := make([]map[string]interface{}, 0)
 
-	tasks_pending_pattern := "tasks_pending-*"
+	tasks_pending_pattern := "tasks_pending-" + group + "-" + key + "-" + role + "-*"
 	tasks_pending_set_keys, _ := r.Keys(tasks_pending_pattern).Result()
 
 	for _, tasks_pending_set_key := range tasks_pending_set_keys {
@@ -174,49 +189,44 @@ func jobcounter(c *gin.Context) {
 
 	r = getRedisInstance()
 
-	//job_total
-	statistics_job_total_pattern := "statistics_job_total-*"
-	statistics_job_total_pending_keys, _ := r.Keys(statistics_job_total_pattern).Result()
-
-	job_total := 0
-	for _, statistics_job_total_pending_key := range statistics_job_total_pending_keys {
-		statistics_job_total_pending, _ := r.Get(statistics_job_total_pending_key).Result()
-		statistics_job_total_pending_i, _ := strconv.Atoi(statistics_job_total_pending)
-		job_total = job_total + statistics_job_total_pending_i
+	group, err1 := c.Cookie("group")
+	if err1 != nil {
+		group = ""
 	}
+	key, err2 := c.Cookie("key")
+	if err2 != nil {
+		key = ""
+	}
+	role, err3 := c.Cookie("role")
+	if err3 != nil {
+		role = ""
+	}
+
+	//job_total
+	statistics_job_total_key := "statistics_job_total-" + group + "-" + key + "-" + role
+	statistics_job_total, _ := r.Get(statistics_job_total_key).Result()
+	statistics_job_total_i, _ := strconv.Atoi(statistics_job_total)
+
+	job_total := statistics_job_total_i
 
 	//task_total
-	statistics_task_total_pattern := "statistics_task_total-*"
-	statistics_task_total_pending_keys, _ := r.Keys(statistics_task_total_pattern).Result()
+	statistics_task_total_key := "statistics_task_total-" + group + "-" + key + "-" + role
+	statistics_task_total, _ := r.Get(statistics_task_total_key).Result()
+	statistics_task_total_i, _ := strconv.Atoi(statistics_task_total)
 
-	task_total := 0
-	for _, statistics_task_total_pending_key := range statistics_task_total_pending_keys {
-		statistics_task_total_pending, _ := r.Get(statistics_task_total_pending_key).Result()
-		statistics_task_total_pending_i, _ := strconv.Atoi(statistics_task_total_pending)
-		task_total = task_total + statistics_task_total_pending_i
-
-	}
+	task_total := statistics_task_total_i
 
 	//job_pending
-	statistics_job_pending_pattern := "statistics_job_pending-*"
-	statistics_job_pending_pending_keys, _ := r.Keys(statistics_job_pending_pattern).Result()
-
-	job_pending := 0
-	for _, statistics_job_pending_pending_key := range statistics_job_pending_pending_keys {
-		statistics_job_pending_pending, _ := r.Get(statistics_job_pending_pending_key).Result()
-		statistics_job_pending_pending_i, _ := strconv.Atoi(statistics_job_pending_pending)
-		job_pending = job_pending + statistics_job_pending_pending_i
-	}
+	statistics_job_pending_key := "statistics_job_pending-" + group + "-" + key + "-" + role
+	statistics_job_pending_pending, _ := r.Get(statistics_job_pending_key).Result()
+	statistics_job_pending_pending_i, _ := strconv.Atoi(statistics_job_pending_pending)
+	job_pending := statistics_job_pending_pending_i
 
 	//work_pending
-	work_pattern := "work-*"
-	work_pending_keys, _ := r.Keys(work_pattern).Result()
+	work_key := "work-" + group + "-" + key + "-" + role
+	work_pending_0, _ := r.LLen(work_key).Result()
 
-	work_pending := 0
-	for _, work_pending_key := range work_pending_keys {
-		work_pending_0, _ := r.LLen(work_pending_key).Result()
-		work_pending = work_pending + int(work_pending_0)
-	}
+	work_pending := int(work_pending_0)
 
 	data := map[string]int{
 		"job_total":    job_total,
@@ -233,7 +243,20 @@ func nodecounter(c *gin.Context) {
 
 	r = getRedisInstance()
 
-	vendor_pattern := "vendor-*"
+	group, err1 := c.Cookie("group")
+	if err1 != nil {
+		group = ""
+	}
+	key, err2 := c.Cookie("key")
+	if err2 != nil {
+		key = ""
+	}
+	role, err3 := c.Cookie("role")
+	if err3 != nil {
+		role = ""
+	}
+
+	vendor_pattern := "vendor-" + group + "-" + key + "-" + role + "-*"
 	vendor_keys, _ := r.Keys(vendor_pattern).Result()
 	vendor_count := len(vendor_keys)
 
@@ -250,7 +273,7 @@ func nodecounter(c *gin.Context) {
 		vendors = append(vendors, item)
 	}
 
-	worker_pattern := "worker-*"
+	worker_pattern := "worker-" + group + "-" + key + "-" + role + "-*"
 	worker_keys, _ := r.Keys(worker_pattern).Result()
 	worker_count := len(worker_keys)
 
@@ -392,10 +415,23 @@ func percentage(c *gin.Context) {
 
 	r = getRedisInstance()
 
+	group, err1 := c.Cookie("group")
+	if err1 != nil {
+		group = ""
+	}
+	key, err2 := c.Cookie("key")
+	if err2 != nil {
+		key = ""
+	}
+	role, err3 := c.Cookie("role")
+	if err3 != nil {
+		role = ""
+	}
+
 	//addressing_count
 	addressing_data := make(map[string]int)
 
-	statistics_task_addressing_pattern := "statistics_task_addressing-*"
+	statistics_task_addressing_pattern := "statistics_task_addressing-" + group + "-" + key + "-" + role + "-*"
 	statistics_task_addressing_keys, _ := r.Keys(statistics_task_addressing_pattern).Result()
 
 	for _, statistics_task_addressing_key := range statistics_task_addressing_keys {
@@ -416,7 +452,7 @@ func percentage(c *gin.Context) {
 	//port_count
 	port_data := make(map[string]int)
 
-	statistics_task_port_pattern := "statistics_task_port-*"
+	statistics_task_port_pattern := "statistics_task_port-" + group + "-" + key + "-" + role + "-*"
 	statistics_task_port_keys, _ := r.Keys(statistics_task_port_pattern).Result()
 
 	for _, statistics_task_port_key := range statistics_task_port_keys {
@@ -446,45 +482,57 @@ func errorlist(c *gin.Context) {
 
 	r = getRedisInstance()
 
+	group, err1 := c.Cookie("group")
+	if err1 != nil {
+		group = ""
+	}
+	key, err2 := c.Cookie("key")
+	if err2 != nil {
+		key = ""
+	}
+	role, err3 := c.Cookie("role")
+	if err3 != nil {
+		role = ""
+	}
+
 	//error job list
 	error_jobs := make([]map[string]interface{}, 0)
 
-	error_job_set_pattern := "error_job-*"
-	error_job_set_keys, _ := r.Keys(error_job_set_pattern).Result()
+	error_job_set_key := "error_job-" + group + "-" + key + "-" + role
 
-	for _, error_job_set_key := range error_job_set_keys {
+	time_now := int(time.Now().Unix())
+	error_ttl, _ := strconv.Atoi(Error_TTL)
+	time_ttl := time_now - error_ttl
 
-		time_now := int(time.Now().Unix())
-		error_ttl, _ := strconv.Atoi(Error_TTL)
-		time_ttl := time_now - error_ttl
+	zrangeby := redis.ZRangeBy{
+		Min: strconv.Itoa(time_ttl),
+		Max: strconv.Itoa(time_now),
+	}
 
-		zrangeby := redis.ZRangeBy{
-			Min: strconv.Itoa(time_ttl),
-			Max: strconv.Itoa(time_now),
-		}
+	job_keys, _ := r.ZRangeByScore(error_job_set_key, zrangeby).Result()
 
-		job_keys, _ := r.ZRangeByScore(error_job_set_key, zrangeby).Result()
+	//remove expired keys
+	r.ZRemRangeByScore(error_job_set_key, strconv.Itoa(0), strconv.Itoa(time_ttl-1))
 
-		for _, job_key := range job_keys {
+	for _, job_key := range job_keys {
 
-			item := make(map[string]interface{})
+		item := make(map[string]interface{})
 
-			job_key_tmp := strings.Split(job_key, "-")
+		job_key_tmp := strings.Split(job_key, "-")
 
-			job_id := job_key_tmp[len(job_key_tmp)-1]
+		job_id := job_key_tmp[len(job_key_tmp)-1]
 
-			item["job_id"] = job_id
-			item["create_time"], _ = r.HGet(job_key, "create_time").Result()
-			item["length"], _ = r.HGet(job_key, "length").Result()
+		item["job_id"] = job_id
+		item["create_time"], _ = r.HGet(job_key, "create_time").Result()
+		item["length"], _ = r.HGet(job_key, "length").Result()
 
-			item["priority"], _ = r.HGet(job_key, "priority").Result()
-			item["description"], _ = r.HGet(job_key, "description").Result()
-			item["encrypt_job_key"] = Encrypt(job_key)
+		item["priority"], _ = r.HGet(job_key, "priority").Result()
+		item["description"], _ = r.HGet(job_key, "description").Result()
+		item["encrypt_job_key"] = Encrypt(job_key)
 
-			item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
-			error_jobs = append(error_jobs, item)
+		item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
+		error_jobs = append(error_jobs, item)
 
-		}
 	}
 
 	//error jobs sort by create_time
@@ -497,68 +545,66 @@ func errorlist(c *gin.Context) {
 
 	error_tasks := make([]map[string]interface{}, 0)
 
-	error_task_set_pattern := "error_task-*"
-	error_task_set_keys, _ := r.Keys(error_task_set_pattern).Result()
+	error_task_set_key := "error_task-" + group + "-" + key + "-" + role
 
-	for _, error_task_set_key := range error_task_set_keys {
+	time_now_2 := int(time.Now().Unix())
+	error_ttl_2, _ := strconv.Atoi(Error_TTL)
+	time_ttl_2 := time_now_2 - error_ttl_2
 
-		time_now := int(time.Now().Unix())
-		error_ttl, _ := strconv.Atoi(Error_TTL)
-		time_ttl := time_now - error_ttl
+	zrangeby_2 := redis.ZRangeBy{
+		Min: strconv.Itoa(time_ttl_2),
+		Max: strconv.Itoa(time_now_2),
+	}
 
-		zrangeby := redis.ZRangeBy{
-			Min: strconv.Itoa(time_ttl),
-			Max: strconv.Itoa(time_now),
+	tasks, _ := r.ZRangeByScore(error_task_set_key, zrangeby_2).Result()
+
+	//remove expired keys
+	r.ZRemRangeByScore(error_task_set_key, strconv.Itoa(0), strconv.Itoa(time_ttl_2-1))
+
+	for _, task_key := range tasks {
+		worker_tmp := strings.Split(task_key, "-")
+		worker_group := worker_tmp[1]
+		worker_key := worker_tmp[2]
+		worker_role := worker_tmp[3]
+		job_id := worker_tmp[4]
+
+		job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
+
+		job_exist, _ := r.HExists(job_key, "description").Result()
+
+		if job_exist == false {
+			r.ZRem(error_task_set_key, task_key)
+			continue
 		}
 
-		tasks, _ := r.ZRangeByScore(error_task_set_key, zrangeby).Result()
+		item := make(map[string]interface{})
 
-		for _, task_key := range tasks {
-			worker_tmp := strings.Split(task_key, "-")
-			worker_group := worker_tmp[1]
-			worker_key := worker_tmp[2]
-			worker_role := worker_tmp[3]
-			job_id := worker_tmp[4]
+		item["job_id"] = job_id
 
-			job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
+		item["description"], _ = r.HGet(job_key, "description").Result()
 
-			job_exist, _ := r.HExists(job_key, "description").Result()
-
-			if job_exist == false {
-				r.ZRem(error_task_set_key, task_key)
-				continue
-			}
-
-			item := make(map[string]interface{})
-
-			item["job_id"] = job_id
-
-			item["description"], _ = r.HGet(job_key, "description").Result()
-
-			start_time_exist, _ := r.HExists(task_key, "start_time").Result()
-			if start_time_exist == false {
-				//ignore deleted task
-				continue
-			}
-
-			addressing, _ := r.HGet(task_key, "addressing").Result()
-			if addressing == "binary" {
-				item["data"] = "BINARY"
-			} else {
-				item["data"], _ = r.HGet(task_key, "data").Result()
-			}
-
-			item["port"], _ = r.HGet(task_key, "port").Result()
-			item["addressing"] = addressing
-			item["create_time"], _ = r.HGet(task_key, "create_time").Result()
-			item["start_time"], _ = r.HGet(task_key, "start_time").Result()
-			item["job_access_key"] = Encrypt(job_key)
-			item["task_access_key"] = Encrypt(task_key)
-
-			item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
-			error_tasks = append(error_tasks, item)
+		start_time_exist, _ := r.HExists(task_key, "start_time").Result()
+		if start_time_exist == false {
+			//ignore deleted task
+			continue
 		}
 
+		addressing, _ := r.HGet(task_key, "addressing").Result()
+		if addressing == "binary" {
+			item["data"] = "BINARY"
+		} else {
+			item["data"], _ = r.HGet(task_key, "data").Result()
+		}
+
+		item["port"], _ = r.HGet(task_key, "port").Result()
+		item["addressing"] = addressing
+		item["create_time"], _ = r.HGet(task_key, "create_time").Result()
+		item["start_time"], _ = r.HGet(task_key, "start_time").Result()
+		item["job_access_key"] = Encrypt(job_key)
+		item["task_access_key"] = Encrypt(task_key)
+
+		item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
+		error_tasks = append(error_tasks, item)
 	}
 
 	//error tasks sort by create_time

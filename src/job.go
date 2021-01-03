@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 )
 
 func jobping(c *gin.Context) {
@@ -110,6 +111,22 @@ func assign(c *gin.Context) {
 
 	statistics_task_port_key_base := "statistics_task_port-" + worker_group + "-" + worker_key + "-" + worker_role
 
+	//---------------------------------
+	//job set of the worker role
+	job_set := "job_set-" + worker_group + "-" + worker_key + "-" + worker_role
+
+	//add to the role's job set
+	job_member := redis.Z{
+		Score:  float64(time.Now().Unix()),
+		Member: job_key,
+	}
+	r.ZAdd(job_set, job_member)
+
+	//task set of the job
+	task_set := "task_set-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
+
+	task_index := 0
+
 	//save task records
 	ignore_count := int64(0)
 
@@ -140,6 +157,14 @@ func assign(c *gin.Context) {
 		r.HSet(task_key, "meta", task_info["meta"])
 		r.HSet(task_key, "addressing", task_info["addressing"])
 		r.HSet(task_key, "port", task_info["port"])
+
+		//add to the job's task set
+		task_index = task_index + 1
+		task_member := redis.Z{
+			Score:  float64(task_index),
+			Member: task_key,
+		}
+		r.ZAdd(task_set, task_member)
 
 		//task addressing and port count statistics
 		statistics_task_addressing_key := statistics_task_addressing_key_base + "-" + task_info["addressing"].(string)
@@ -243,8 +268,10 @@ func delete(c *gin.Context) {
 	r.Expire(job_key, time.Second*time.Duration(timeout_ttl))
 
 	//seek all task in job and delete
-	task_key_pattern := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-*"
-	task_keys, _ := r.Keys(task_key_pattern).Result()
+	//task set of the job
+	task_set := "task_set-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
+
+	task_keys, _ := r.ZRange(task_set, 0, -1).Result()
 
 	for _, task_key := range task_keys {
 		//only mark as delete state
@@ -338,8 +365,10 @@ func detail(c *gin.Context) {
 	//read result from task
 	tasklist := make([]map[string]string, 0)
 
-	task_key_pattern := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-*"
-	task_keys, _ := r.Keys(task_key_pattern).Result()
+	//task set of the job
+	task_set := "task_set-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
+
+	task_keys, _ := r.ZRange(task_set, 0, -1).Result()
 
 	for _, task_key := range task_keys {
 
@@ -419,10 +448,12 @@ func retry(c *gin.Context) {
 	worker_key := jsondata["worker_key"].(string)
 	worker_role := jsondata["worker_role"].(string)
 
-	job_info := jsondata["job"].(map[string]string)
+	job_info := jsondata["job"].(map[string]interface{})
 
-	task_key_pattern := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"] + "-*"
-	task_keys, _ := r.Keys(task_key_pattern).Result()
+	//task set of the job
+	task_set := "task_set-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
+
+	task_keys, _ := r.ZRange(task_set, 0, -1).Result()
 
 	//repush to the right of list if timeout
 	for _, task_key := range task_keys {
@@ -438,11 +469,11 @@ func retry(c *gin.Context) {
 		}
 
 		//remove from tasks_pending set
-		tasks_pending_key := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"]
+		tasks_pending_key := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
 		r.SRem(tasks_pending_key, task_key)
 
 		//added to tasks_waiting set
-		tasks_waiting_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"]
+		tasks_waiting_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
 		r.SAdd(tasks_waiting_key, task_key)
 
 	}
