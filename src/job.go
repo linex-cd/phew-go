@@ -92,6 +92,14 @@ func assign(c *gin.Context) {
 	r.HSet(job_key, "description", job_info["description"].(string))
 	r.HSet(job_key, "priority", job_info["priority"].(float64))
 
+	//add to priority set
+	priority_set := "priority_set-" + worker_group + "-" + worker_key + "-" + worker_role
+	priority_member := redis.Z{
+		Score:  job_info["priority"].(float64),
+		Member: job_info["priority"].(float64),
+	}
+	r.ZAdd(priority_set, priority_member)
+
 	tasks := jsondata["tasks"].([]interface{})
 
 	length := int64(len(tasks))
@@ -481,9 +489,13 @@ func retry(c *gin.Context) {
 
 		}
 
-		//remove from tasks_pending set
+		//remove from tasks_pending
 		tasks_pending_key := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
 		r.SRem(tasks_pending_key, task_key)
+
+		//remove from tasks_pending total set
+		tasks_pending_set := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role
+		r.SRem(tasks_pending_set, task_key)
 
 		//added to tasks_waiting set
 		tasks_waiting_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)

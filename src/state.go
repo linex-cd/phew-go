@@ -117,56 +117,51 @@ func latestwork(c *gin.Context) {
 	//task_latest
 	task_latest := make([]map[string]interface{}, 0)
 
-	tasks_pending_pattern := "tasks_pending-" + group + "-" + key + "-" + role + "-*"
-	tasks_pending_set_keys, _ := r.Keys(tasks_pending_pattern).Result()
+	tasks_pending_set := "tasks_pending_set-" + group + "-" + key + "-" + role
+	task_keys, _ := r.SMembers(tasks_pending_set).Result()
 
-	for _, tasks_pending_set_key := range tasks_pending_set_keys {
+	for _, task_key := range task_keys {
 
-		job_key := "job-" + tasks_pending_set_key[14:]
+		job_key := strings.Replace(task_key, "task-", "job-", -1)
 		job_key_tmp := strings.Split(job_key, "-")
 
 		job_id := job_key_tmp[len(job_key_tmp)-1]
 
-		tasks, _ := r.SMembers(tasks_pending_set_key).Result()
-
 		job_exist, _ := r.HExists(job_key, "description").Result()
 
-		for _, task_key := range tasks {
-
-			if job_exist == false {
-				r.SRem(tasks_pending_set_key, task_key)
-				continue
-			}
-
-			item := make(map[string]interface{})
-
-			item["job_id"] = job_id
-
-			item["description"], _ = r.HGet(job_key, "description").Result()
-
-			start_time_exist, _ := r.HExists(task_key, "start_time").Result()
-			if start_time_exist == false {
-				//ignore deleted task
-				continue
-			}
-
-			addressing, _ := r.HGet(task_key, "addressing").Result()
-			if addressing == "binary" {
-				item["data"] = "BINARY"
-			} else {
-				item["data"], _ = r.HGet(task_key, "data").Result()
-			}
-
-			item["port"], _ = r.HGet(task_key, "port").Result()
-			item["addressing"] = addressing
-			item["create_time"], _ = r.HGet(task_key, "create_time").Result()
-			item["start_time"], _ = r.HGet(task_key, "start_time").Result()
-			item["job_access_key"] = Encrypt(job_key)
-			item["task_access_key"] = Encrypt(task_key)
-
-			item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
-			task_latest = append(task_latest, item)
+		if job_exist == false {
+			r.SRem(tasks_pending_set, task_key)
+			continue
 		}
+
+		item := make(map[string]interface{})
+
+		item["job_id"] = job_id
+
+		item["description"], _ = r.HGet(job_key, "description").Result()
+
+		start_time_exist, _ := r.HExists(task_key, "start_time").Result()
+		if start_time_exist == false {
+			//ignore deleted task
+			continue
+		}
+
+		addressing, _ := r.HGet(task_key, "addressing").Result()
+		if addressing == "binary" {
+			item["data"] = "BINARY"
+		} else {
+			item["data"], _ = r.HGet(task_key, "data").Result()
+		}
+
+		item["port"], _ = r.HGet(task_key, "port").Result()
+		item["addressing"] = addressing
+		item["create_time"], _ = r.HGet(task_key, "create_time").Result()
+		item["start_time"], _ = r.HGet(task_key, "start_time").Result()
+		item["job_access_key"] = Encrypt(job_key)
+		item["task_access_key"] = Encrypt(task_key)
+
+		item["create_time_i"], _ = strconv.Atoi(item["create_time"].(string))
+		task_latest = append(task_latest, item)
 	}
 
 	//task_latest sort by create_time

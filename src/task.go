@@ -4,7 +4,6 @@ package main
 
 import (
 	"encoding/json"
-	"sort"
 	"strconv"
 	"time"
 
@@ -72,18 +71,19 @@ func get(c *gin.Context) {
 	worker_key := jsondata["worker_key"].(string)
 	worker_role := jsondata["worker_role"].(string)
 
-	//get all work list keys
-	work_key_pattern := "work-" + worker_group + "-" + worker_key + "-" + worker_role + "-*"
-	work_keys, _ := r.Keys(work_key_pattern).Result()
+	//get priority list
 
-	if len(work_keys) == 0 {
+	priority_set := "priority_set-" + worker_group + "-" + worker_key + "-" + worker_role
+	prioritys, _ := r.ZRevRange(priority_set, 0, -1).Result()
+
+	if len(prioritys) == 0 {
 		ResponseJson(c, 404, "no task", make(map[string]string))
 		return
 	}
 
-	//sort and get the highest priority key
-	sort.Strings(work_keys)
-	work_key := work_keys[len(work_keys)-1]
+	//get the highest priority key
+	priority := prioritys[0]
+	work_key := "work-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + priority
 
 	//popup a valid task_key and get the task info
 	task_info := make(map[string]string)
@@ -93,6 +93,8 @@ func get(c *gin.Context) {
 
 		task_key_tmp, err := r.RPop(work_key).Result()
 		if err != nil {
+			//remove priority from priority set
+			r.ZRem(priority_set, priority)
 			ResponseJson(c, 404, "no task", make(map[string]string))
 			return
 		}
@@ -142,9 +144,13 @@ func get(c *gin.Context) {
 
 	}
 
-	//added to tasks_pending set
+	//added to tasks_pending
 	tasks_pending_key := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + task_info["job_id"]
 	r.SAdd(tasks_pending_key, task_key)
+
+	//added to tasks_pending total set
+	tasks_pending_set := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role
+	r.SAdd(tasks_pending_set, task_key)
 
 	//remove from tasks_waiting set
 	tasks_waiting_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + task_info["job_id"]
@@ -215,9 +221,13 @@ func finish(c *gin.Context) {
 	r.HSet(task_key, "note", task_info["note"])
 	r.HSet(task_key, "result", task_info["result"])
 
-	//remove from tasks_pending set
+	//remove from tasks_pending
 	tasks_pending_key := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
 	r.SRem(tasks_pending_key, task_key)
+
+	//remove from tasks_pending total set
+	tasks_pending_set := "tasks_pending_set-" + worker_group + "-" + worker_key + "-" + worker_role
+	r.SRem(tasks_pending_set, task_key)
 
 	tasks_waiting_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
 
