@@ -81,9 +81,66 @@ function showtask(task_access_key){
 	
 }
 
+
+function login(){
+	
+
+	var group = prompt("Input Worker Group",$.cookie('group'));
+	if (group == null){
+		return 
+	
+	}
+	var key = prompt("Input Worker Key",$.cookie('key'));
+	if (key == null){
+		return 
+	
+	}
+	var role = prompt("Input Worker Role",$.cookie('role'));
+	if (role == null){
+		return 
+	
+	}
+	
+	$.cookie('group', group, { path: '/' })
+	$.cookie('key', key, { path: '/' })
+	$.cookie('role', role, { path: '/' })
+	
+
+	$(".credential").html('<h4 onclick="logout()" style="color:#ff9800; line-height:60px; cursor :pointer;">Clean Credential</h4>')
+}
+
+function logout(){
+	
+	$.removeCookie('group', { path: '/' });
+	$.removeCookie('key', { path: '/' })
+	$.removeCookie('role', { path: '/' })
+	
+	$(".credential").html('<h4 onclick="login()" style="color:#f6ffba; line-height:60px; cursor :pointer;">Config Credential</h4>')
+	
+}
+
+function checkcredential(){
+	
+	var group = $.cookie('group')
+	var key = $.cookie('key')
+	var role = $.cookie('role')
+	
+	if (group == undefined || key == undefined || role == undefined )
+	{
+		$(".credential").html('<h4 onclick="login()" style="color:#f6ffba; line-height:60px; cursor :pointer;">Config Credential</h4>')
+		
+	}
+	else{
+		
+		$(".credential").html('<h4 onclick="logout()" style="color:#ff9800; line-height:60px; cursor :pointer;">Clean Credential</h4>')
+	}
+	
+	
+}
+
 (function ($) {
  "use strict";
-		
+		checkcredential()
 		/////////////////////////////////////////////////
 		
 		$.get("/state/system", function(ret){
