@@ -88,6 +88,12 @@ func latestwork(c *gin.Context) {
 	//jobs := r.ZRange(job_set, 0, -1)
 	jobs, _ := r.ZRevRange(job_set, 0, -1).Result()
 
+	//remove expired keys
+	time_now := int(time.Now().Unix())
+	error_ttl, _ := strconv.Atoi(Error_TTL)
+	time_ttl := time_now - error_ttl
+	r.ZRemRangeByScore(job_set, strconv.Itoa(0), strconv.Itoa(time_ttl-1))
+
 	for _, job_key := range jobs {
 
 		job_key_tmp := strings.Split(job_key, "-")

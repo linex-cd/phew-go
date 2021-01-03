@@ -298,6 +298,10 @@ func delete(c *gin.Context) {
 	timeout_ttl, _ := strconv.Atoi(Error_TTL)
 	r.Expire(job_key, time.Second*time.Duration(timeout_ttl))
 
+	//del the role's job set
+	//job_set := "job_set-" + worker_group + "-" + worker_key + "-" + worker_role
+	//r.ZRem(job_set, job_key)
+
 	//seek all task in job and delete
 	//task set of the job
 	task_set := "task_set-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string)
@@ -310,6 +314,9 @@ func delete(c *gin.Context) {
 	for _, task_key := range task_keys {
 		//only mark as delete state
 		//r.HSet(task_key, "state", "deleted")
+
+		//delete from task_set
+		p.ZRem(task_set, task_key)
 
 		//delete task excluding from error list
 		error_task_set_key := "error_task-" + worker_group + "-" + worker_key + "-" + worker_role
