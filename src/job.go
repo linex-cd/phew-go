@@ -44,6 +44,10 @@ func jobping(c *gin.Context) {
 	r.HSet(vendor_node_key, "location", jsondata["vendor_location"].(string))
 	r.HSet(vendor_node_key, "state", "online")
 
+	//add to vendor set
+	vendor_set := "vendor_set-" + worker_group + "-" + worker_key + "-" + worker_role
+	r.SAdd(vendor_set, vendor_node_key)
+
 	data := "pong"
 
 	ResponseJson(c, 200, "ok", data)
@@ -111,6 +115,11 @@ func assign(c *gin.Context) {
 
 	statistics_task_port_key_base := "statistics_task_port-" + worker_group + "-" + worker_key + "-" + worker_role
 
+	//statistics set
+	statistics_task_addressing_key_set := "statistics_task_addressing_set-" + worker_group + "-" + worker_key + "-" + worker_role
+
+	statistics_task_port_key_set := "statistics_task_port_set-" + worker_group + "-" + worker_key + "-" + worker_role
+
 	//---------------------------------
 	//job set of the worker role
 	job_set := "job_set-" + worker_group + "-" + worker_key + "-" + worker_role
@@ -172,6 +181,10 @@ func assign(c *gin.Context) {
 
 		statistics_task_port_key := statistics_task_port_key_base + "-" + task_info["port"].(string)
 		r.IncrBy(statistics_task_port_key, 1)
+
+		//add to statistics set
+		r.SAdd(statistics_task_addressing_key_set, statistics_task_addressing_key)
+		r.SAdd(statistics_task_port_key_set, statistics_task_port_key)
 
 		//skip ignore task
 		if task_info["port"] == "ignore" {

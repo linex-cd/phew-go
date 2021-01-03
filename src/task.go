@@ -44,6 +44,10 @@ func taskping(c *gin.Context) {
 	r.HSet(worker_node_key, "location", jsondata["worker_location"].(string))
 	r.HSet(worker_node_key, "state", "online")
 
+	//add to worker set
+	worker_set := "worker_set-" + worker_group + "-" + worker_key + "-" + worker_role
+	r.SAdd(worker_set, worker_node_key)
+
 	data := "pong"
 
 	ResponseJson(c, 200, "ok", data)

@@ -256,8 +256,8 @@ func nodecounter(c *gin.Context) {
 		role = ""
 	}
 
-	vendor_pattern := "vendor-" + group + "-" + key + "-" + role + "-*"
-	vendor_keys, _ := r.Keys(vendor_pattern).Result()
+	vendor_set := "vendor_set-" + group + "-" + key + "-" + role
+	vendor_keys, _ := r.SMembers(vendor_set).Result()
 	vendor_count := len(vendor_keys)
 
 	vendors := make([]map[string]string, 0)
@@ -273,8 +273,8 @@ func nodecounter(c *gin.Context) {
 		vendors = append(vendors, item)
 	}
 
-	worker_pattern := "worker-" + group + "-" + key + "-" + role + "-*"
-	worker_keys, _ := r.Keys(worker_pattern).Result()
+	worker_set := "worker_set-" + group + "-" + key + "-" + role
+	worker_keys, _ := r.SMembers(worker_set).Result()
 	worker_count := len(worker_keys)
 
 	workers := make([]map[string]string, 0)
@@ -431,8 +431,8 @@ func percentage(c *gin.Context) {
 	//addressing_count
 	addressing_data := make(map[string]int)
 
-	statistics_task_addressing_pattern := "statistics_task_addressing-" + group + "-" + key + "-" + role + "-*"
-	statistics_task_addressing_keys, _ := r.Keys(statistics_task_addressing_pattern).Result()
+	statistics_task_addressing_set := "statistics_task_addressing_set-" + group + "-" + key + "-" + role
+	statistics_task_addressing_keys, _ := r.SMembers(statistics_task_addressing_set).Result()
 
 	for _, statistics_task_addressing_key := range statistics_task_addressing_keys {
 
@@ -452,8 +452,8 @@ func percentage(c *gin.Context) {
 	//port_count
 	port_data := make(map[string]int)
 
-	statistics_task_port_pattern := "statistics_task_port-" + group + "-" + key + "-" + role + "-*"
-	statistics_task_port_keys, _ := r.Keys(statistics_task_port_pattern).Result()
+	statistics_task_port_set := "statistics_task_port_set-" + group + "-" + key + "-" + role
+	statistics_task_port_keys, _ := r.SMembers(statistics_task_port_set).Result()
 
 	for _, statistics_task_port_key := range statistics_task_port_keys {
 
