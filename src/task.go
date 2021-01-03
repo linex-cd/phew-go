@@ -153,7 +153,7 @@ func get(c *gin.Context) {
 	r.SAdd(tasks_pending_key, task_key)
 
 	//add to tasks_pending total set
-	tasks_pending_set := "tasks_pending-" + worker_group + "-" + worker_key + "-" + worker_role
+	tasks_pending_set := "tasks_pending_set" + worker_group + "-" + worker_key + "-" + worker_role
 	r.SAdd(tasks_pending_set, task_key)
 
 	//add to tasks_pending all set

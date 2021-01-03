@@ -225,10 +225,15 @@ func jobcounter(c *gin.Context) {
 	}
 
 	//work_pending
-	work_key := "work-" + group + "-" + key + "-" + role
-	work_pending_0, _ := r.LLen(work_key).Result()
+	work_pending := 0
+	priority_set := "priority_set-" + group + "-" + key + "-" + role
+	prioritys, _ := r.ZRevRange(priority_set, 0, -1).Result()
 
-	work_pending := int(work_pending_0)
+	for _, priority := range prioritys {
+		work_key := "work-" + group + "-" + key + "-" + role + "-" + priority
+		work_pending_0, _ := r.LLen(work_key).Result()
+		work_pending = int(work_pending_0)
+	}
 
 	data := map[string]int{
 		"job_total":    job_total,
