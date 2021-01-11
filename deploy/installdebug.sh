@@ -7,7 +7,7 @@ echo 'Installing Phew ('${version}')...'
 echo 'Building docker image...'
 cd ..
 cp ./deploy/Dockerfile ./
-docker build --build-arg VER=1.0.0 -f ./Dockerfile -t phew:${version} .
+docker build --build-arg VER=${version} -f ./Dockerfile -t phew:${version} .
 rm Dockerfile
 cd ./deploy
 

@@ -21,6 +21,7 @@
 
 安装
 ./installdebug.sh
+
 进入容器后，执行启动脚本即可运行
 ./start.sh
 
