@@ -161,7 +161,7 @@ func assign(c *gin.Context) {
 
 		task_info["hash"] = Md5(task_info["data"].(string))
 
-		task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-" + task_info["hash"].(string)
+		task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-" + strconv.Itoa(task_index)
 
 		p.HSet(task_key, "state", "assigned")
 		p.HSet(task_key, "note", "")
