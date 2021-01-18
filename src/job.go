@@ -160,8 +160,9 @@ func assign(c *gin.Context) {
 		//make task records
 
 		task_info["hash"] = Md5(task_info["data"].(string))
+		task_info["index"] = strconv.Itoa(task_index)
 
-		task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-" + strconv.Itoa(task_index)
+		task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-" + task_info["index"].(string)
 
 		p.HSet(task_key, "state", "assigned")
 		p.HSet(task_key, "note", "")
@@ -177,6 +178,7 @@ func assign(c *gin.Context) {
 		p.HSet(task_key, "priority", job_info["priority"])
 
 		p.HSet(task_key, "hash", task_info["hash"])
+		p.HSet(task_key, "index", task_info["index"])
 
 		p.HSet(task_key, "meta", task_info["meta"])
 		p.HSet(task_key, "addressing", task_info["addressing"])
@@ -323,7 +325,7 @@ func delete(c *gin.Context) {
 
 		_, err := r.ZRank(error_task_set_key, task_key).Result()
 		if err == nil {
-			p.HDel(task_key)
+			p.Del(task_key)
 		}
 
 	}

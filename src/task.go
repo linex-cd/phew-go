@@ -204,11 +204,11 @@ func finish(c *gin.Context) {
 	task_info := jsondata["task"].(map[string]interface{})
 
 	job_id := task_info["job_id"].(string)
-	hash := task_info["hash"].(string)
+	index := task_info["index"].(string)
 
 	job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
 
-	task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id + "-" + hash
+	task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id + "-" + index
 
 	old_task_state, err := r.HGet(task_key, "state").Result()
 	if err == nil {
