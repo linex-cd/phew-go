@@ -96,14 +96,6 @@ func assign(c *gin.Context) {
 	r.HSet(job_key, "description", job_info["description"].(string))
 	r.HSet(job_key, "priority", job_info["priority"].(float64))
 
-	//add to priority set
-	priority_set := "priority_set-" + worker_group + "-" + worker_key + "-" + worker_role
-	priority_member := redis.Z{
-		Score:  job_info["priority"].(float64),
-		Member: job_info["priority"].(float64),
-	}
-	r.ZAdd(priority_set, priority_member)
-
 	tasks := jsondata["tasks"].([]interface{})
 
 	length := int64(len(tasks))
@@ -256,6 +248,14 @@ func assign(c *gin.Context) {
 		r.SAdd(tasks_waiting_key, task_key)
 
 	}
+
+	//add to priority set
+	priority_set := "priority_set-" + worker_group + "-" + worker_key + "-" + worker_role
+	priority_member := redis.Z{
+		Score:  job_info["priority"].(float64),
+		Member: job_info["priority"].(float64),
+	}
+	r.ZAdd(priority_set, priority_member)
 
 	//update vendor node hit counter
 	vendor_node_key := "vendor-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + jsondata["vendor_id"].(string)
