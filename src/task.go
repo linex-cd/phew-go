@@ -116,6 +116,7 @@ func get(c *gin.Context) {
 		task_info["addressing"], _ = r.HGet(task_key, "addressing").Result()
 		task_info["port"], _ = r.HGet(task_key, "port").Result()
 		task_info["hash"], _ = r.HGet(task_key, "hash").Result()
+		task_info["index"], _ = r.HGet(task_key, "index").Result()
 
 		//add start timestamp
 		r.HSet(task_key, "start_time", time.Now().Unix())
