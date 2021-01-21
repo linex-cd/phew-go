@@ -43,20 +43,12 @@ func system(c *gin.Context) {
 		datadisk = int(datadiskInfo.UsedPercent)
 	}
 
-	//GPU
-	gpu := 90
-
-	//temp
-	temp := 60
-
 	data := map[string]int{
 		"db":         db,
 		"cpu":        cpu,
 		"memory":     memory,
-		"gpu":        gpu,
 		"systemdisk": systemdisk,
 		"datadisk":   datadisk,
-		"temp":       temp,
 	}
 
 	ResponseJson(c, 200, "ok", data)

@@ -99,6 +99,15 @@ func daemon_thread(timeout int64, try_times_limit int) {
 					work_key := "work-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + priority
 					r.RPush(work_key, task_key)
 
+					//add to priority set
+					priority_set := "priority_set-" + worker_group + "-" + worker_key + "-" + worker_role
+					priority_i, _ := strconv.Atoi(priority)
+					priority_member := redis.Z{
+						Score:  float64(priority_i),
+						Member: float64(priority_i),
+					}
+					r.ZAdd(priority_set, priority_member)
+
 				} else {
 					fmt.Println("mark task timeout:", task_key)
 
