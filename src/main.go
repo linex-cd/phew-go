@@ -9,7 +9,7 @@ import (
 func main() {
 
 	go health_thread(300)
-	go daemon_thread(60, 3)
+	go daemon_thread()
 
 	engine := gin.Default()
 

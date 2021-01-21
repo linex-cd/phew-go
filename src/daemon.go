@@ -13,11 +13,11 @@ import (
 
 //timeout = 60, try_times_limit = 3
 
-func daemon_thread(timeout int64, try_times_limit int) {
+func daemon_thread() {
 
 	r = getRedisInstance()
 
-	fmt.Println("started deamon thread, timeout = ", timeout)
+	fmt.Println("started deamon thread")
 
 	for {
 		time.Sleep(30)
@@ -25,13 +25,9 @@ func daemon_thread(timeout int64, try_times_limit int) {
 		//seek all tasks pending
 		tasks_pending_all := "tasks_pending_all"
 
-		tasks_pending_keys, _ := r.SMembers(tasks_pending_all).Result()
+		tasks_pending, _ := r.SMembers(tasks_pending_all).Result()
 
-		for _, tasks_pending_key := range tasks_pending_keys {
-
-			tasks_waiting_key := strings.Replace(tasks_pending_key, "tasks_pending-", "tasks_waiting-", -1)
-
-			task_key := tasks_pending_key
+		for _, task_key := range tasks_pending {
 
 			//remove from pending set if timeout and mark timeout
 
@@ -47,6 +43,18 @@ func daemon_thread(timeout int64, try_times_limit int) {
 				continue
 			}
 
+			task_timeout, err := r.HGet(task_key, "timeout").Result()
+			if err != nil {
+				fmt.Println("some key dismissed, continue")
+				continue
+			}
+
+			task_try_times_limit, err := r.HGet(task_key, "try_times_limit").Result()
+			if err != nil {
+				fmt.Println("some key dismissed, continue")
+				continue
+			}
+
 			worker_tmp := strings.Split(task_key, "-")
 			worker_group := worker_tmp[1]
 			worker_key := worker_tmp[2]
@@ -55,10 +63,18 @@ func daemon_thread(timeout int64, try_times_limit int) {
 
 			job_key := "job-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
 
+			tasks_pending_key := "tasks_waiting-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_id
+			tasks_waiting_key := strings.Replace(tasks_pending_key, "tasks_pending-", "tasks_waiting-", -1)
+
 			task_create_time_i32, err := strconv.Atoi(task_create_time)
 			task_create_time_i := int64(task_create_time_i32)
 
-			if time.Now().Unix()-task_create_time_i > timeout {
+			task_timeout_i32, err := strconv.Atoi(task_timeout)
+			task_timeout_i := int64(task_timeout_i32)
+
+			task_try_times_limit_i32, err := strconv.Atoi(task_try_times_limit)
+
+			if time.Now().Unix()-task_create_time_i > task_timeout_i {
 
 				fmt.Println("found a task timeout:", task_key)
 
@@ -71,7 +87,7 @@ func daemon_thread(timeout int64, try_times_limit int) {
 
 				try_times_i, err := strconv.Atoi(try_times)
 
-				if try_times_i < try_times_limit {
+				if try_times_i < task_try_times_limit_i32 {
 					fmt.Println("resend task to work list:", task_key)
 
 					//increase try_times

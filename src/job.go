@@ -175,6 +175,8 @@ func assign(c *gin.Context) {
 		p.HSet(task_key, "meta", task_info["meta"])
 		p.HSet(task_key, "addressing", task_info["addressing"])
 		p.HSet(task_key, "port", task_info["port"])
+		p.HSet(task_key, "timeout", task_info["timeout"])
+		p.HSet(task_key, "try_times_limit", task_info["try_times_limit"])
 
 		//add to the job's task set
 		task_index = task_index + 1
