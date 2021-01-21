@@ -85,6 +85,8 @@ def main():
 	task['addressing'] = 'URL'
 	task['meta'] = '{"abc":"def"}'
 	task['port'] = 'test'
+	task['timeout'] = 60
+	task['try_times_limit'] = 3
 	task['data'] = 'http://127.0.0.1:2020/2.pdf'
 	
 	tasks.append(task)
