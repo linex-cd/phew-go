@@ -129,7 +129,7 @@ func get(c *gin.Context) {
 			if Existfile(taskdata_filename) == true {
 				taskdata := Readfile(taskdata_filename)
 				task_info["data"] = taskdata
-				r.HSet(task_key, "state", "waiting")
+				r.HSet(task_key, "state", "pending")
 				break
 			} else {
 				//mark task as error and then repop a new task
@@ -142,7 +142,7 @@ func get(c *gin.Context) {
 			}
 		} else {
 			task_info["data"], _ = r.HGet(task_key, "data").Result()
-			r.HSet(task_key, "state", "waiting")
+			r.HSet(task_key, "state", "pending")
 
 			break
 		}

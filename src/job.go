@@ -156,7 +156,7 @@ func assign(c *gin.Context) {
 
 		task_key := "task-" + worker_group + "-" + worker_key + "-" + worker_role + "-" + job_info["job_id"].(string) + "-" + task_info["index"].(string)
 
-		p.HSet(task_key, "state", "assigned")
+		p.HSet(task_key, "state", "waiting")
 		p.HSet(task_key, "note", "")
 		p.HSet(task_key, "result", "")
 

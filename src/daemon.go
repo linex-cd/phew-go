@@ -78,7 +78,7 @@ func daemon_thread(timeout int64, try_times_limit int) {
 					r.HSet(task_key, "try_times", try_times_i+1)
 
 					//reset state
-					r.HSet(task_key, "state", "assigned")
+					r.HSet(task_key, "state", "waiting")
 
 					//remove from pending set
 					r.SRem(tasks_pending_key, task_key)
