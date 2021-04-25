@@ -1,3 +1,3 @@
-/redis-6.0.4/src/redis-server redis2.conf &
+/redis-6.0.4/src/redis-server redis.conf &
 ./phew
 
